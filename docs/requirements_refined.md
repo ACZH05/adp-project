@@ -49,6 +49,12 @@ Each requirement uses the following format:
 - `S1-FR-06` | Type: `FR` | Module: `S1-M3`
   Requirement: The system shall maintain an immutable audit trail for security-relevant user actions (login, submission, status update, decision update).
   Objective Link: `O3`
+- `S1-FR-07` | Type: `FR` | Module: `S1-M3`
+  Requirement: The system shall provide centralized auth validation for internal subsystem requests from S2 and S3 before protected operations proceed.
+  Objective Link: `O1`, `O3`
+- `S1-FR-08` | Type: `FR` | Module: `S1-M3`
+  Requirement: The system shall return standardized auth decision payloads to consuming subsystems with allow/deny result, role claims, and audit correlation metadata.
+  Objective Link: `O1`, `O3`
 - `S1-NFR-03` | Type: `NFR` | Module: `S1-M3`
   Requirement: The system shall encrypt data in transit (TLS) and sensitive stored data at rest.
   Objective Link: `O3`
@@ -105,6 +111,9 @@ Each requirement uses the following format:
 - `S2-FR-11` | Type: `FR` | Module: `S2-M3`
   Requirement: The system shall send email notifications on key status changes, including approval and rejection.
   Objective Link: `O3`
+- `S2-FR-12` | Type: `FR` | Module: `S2-M3`
+  Requirement: The system shall require successful auth validation from S1 before protected applicant operations (save draft, submit, resubmit, and view status).
+  Objective Link: `O1`, `O3`
 - `S2-NFR-03` | Type: `NFR` | Module: `S2-M3`
   Requirement: Status updates and notification events shall be idempotent to avoid duplicate state transitions and duplicate emails.
   Objective Link: `O3`
@@ -143,6 +152,9 @@ Each requirement uses the following format:
 - `S3-FR-07` | Type: `FR` | Module: `S3-M3`
   Requirement: When AI service is unavailable or confidence is below threshold, the system shall route the application to manual pre-screening without blocking the overall workflow.
   Objective Link: `O3`
+- `S3-FR-08` | Type: `FR` | Module: `S3-M3`
+  Requirement: The system shall require successful auth validation from S1 before executing or continuing verification actions in user-triggered or service-triggered contexts.
+  Objective Link: `O1`, `O3`
 - `S3-NFR-03` | Type: `NFR` | Module: `S3-M3`
   Requirement: AI model version and prompt/policy version used for each verification shall be recorded for auditability.
   Objective Link: `O3`
@@ -198,6 +210,11 @@ Each requirement uses the following format:
   Objective Link: `O2`, `O3`
 
 ### Cross-Subsystem Interface and Handoff Contracts
+- Interface Type Definition: `AuthValidationRequest`
+  Fields: actor type, credential/token context, requested action, target resource/application ID, correlation ID.
+- Interface Type Definition: `AuthValidationResult`
+  Fields: decision (allow/deny), subject ID, role claims, permitted scope, expiry, denial reason, audit reference ID.
+
 - `INT-01` | Type: `INT` | Module: `Handoff S2 -> S3`
   Requirement: The system shall transmit an `ApplicationPackage` (form data, document metadata, checklist state, submission version) from intake to AI verification.
   Objective Link: `O1`, `O2`
@@ -213,20 +230,32 @@ Each requirement uses the following format:
 - `INT-05` | Type: `INT` | Module: `Event S2/S3/S4 -> S4-M3`
   Requirement: Subsystems S2, S3, and S4 shall emit normalized KPI events for baseline setup and six-month performance tracking.
   Objective Link: `O2`, `O3`
+- `INT-06` | Type: `INT` | Module: `Handoff S2 -> S1`
+  Requirement: S2 shall send an `AuthValidationRequest` to S1 before protected applicant operations (save draft, submit, resubmit, view status).
+  Objective Link: `O1`, `O3`
+- `INT-07` | Type: `INT` | Module: `Handoff S1 -> S2`
+  Requirement: S1 shall return an `AuthValidationResult` to S2 with allow/deny decision, subject identity, role claims, expiry, denial reason, and audit reference.
+  Objective Link: `O1`, `O3`
+- `INT-08` | Type: `INT` | Module: `Handoff S3 -> S1`
+  Requirement: S3 shall send an `AuthValidationRequest` to S1 for verification execution context validation in user-triggered and service-triggered flows.
+  Objective Link: `O1`, `O3`
+- `INT-09` | Type: `INT` | Module: `Handoff S1 -> S3`
+  Requirement: S1 shall return an `AuthValidationResult` to S3 with decision outcome and audit correlation metadata for verification workflow logging.
+  Objective Link: `O1`, `O3`
 
 ## Team Ownership (4 Members)
 - Member 1
   Primary Subsystem: `S1: Identity, Access, and Security`
   Core Modules: `S1-M1`, `S1-M2`, `S1-M3`
-  Dependencies/Handoffs: Depends on S2/S4 for secure endpoint usage; provides RBAC and audit foundation to all subsystems.
+  Dependencies/Handoffs: Provides centralized auth validation interfaces for S2 and S3 (`INT-06`, `INT-07`, `INT-08`, `INT-09`); provides RBAC and audit foundation to all subsystems.
 - Member 2
   Primary Subsystem: `S2: Applicant Portal and Guidance`
   Core Modules: `S2-M1`, `S2-M2`, `S2-M3`
-  Dependencies/Handoffs: Sends intake package to S3 (`INT-01`); consumes verification and decision outputs from S3/S4 (`INT-02`, `INT-04`).
+  Dependencies/Handoffs: Requests and consumes auth validation from S1 (`INT-06`, `INT-07`); sends intake package to S3 (`INT-01`); consumes verification and decision outputs from S3/S4 (`INT-02`, `INT-04`).
 - Member 3
   Primary Subsystem: `S3: AI Verification and Pre-Screening`
   Core Modules: `S3-M1`, `S3-M2`, `S3-M3`
-  Dependencies/Handoffs: Consumes intake package from S2; returns verification output to S2 and S4 (`INT-02`, `INT-03`).
+  Dependencies/Handoffs: Requests and consumes auth validation from S1 (`INT-08`, `INT-09`); consumes intake package from S2; returns verification output to S2 and S4 (`INT-02`, `INT-03`).
 - Member 4
   Primary Subsystem: `S4: Officer Workflow, Decisioning, and Analytics`
   Core Modules: `S4-M1`, `S4-M2`, `S4-M3`
@@ -235,10 +264,10 @@ Each requirement uses the following format:
 ## Objective Traceability Matrix
 - O1: Online platform with AI pre-verification
   Measurable Target: AI pre-screen runs before officer review for submitted applications.
-  Primary Requirement Coverage: `S2-FR-01`, `S2-FR-03`, `S3-FR-01`, `S3-FR-04`, `S4-FR-01`, `INT-01`, `INT-03`
+  Primary Requirement Coverage: `S1-FR-07`, `S2-FR-01`, `S2-FR-03`, `S2-FR-12`, `S3-FR-01`, `S3-FR-04`, `S3-FR-08`, `S4-FR-01`, `INT-01`, `INT-03`, `INT-06`, `INT-07`, `INT-08`, `INT-09`
 - O2: Reduce incomplete applications by >=60%
   Measurable Target: Incomplete-rate reduction against baseline reaches >=60% within monitored period.
   Primary Requirement Coverage: `S2-FR-03`, `S2-FR-04`, `S2-FR-06`, `S2-FR-09`, `S3-FR-02`, `S3-FR-04`, `S4-FR-07`, `S4-FR-08`, `S4-FR-09`, `INT-05`
 - O3: Reduce processing time within 6 months
   Measurable Target: Cycle-time trend decreases from baseline within 6 months after implementation.
-  Primary Requirement Coverage: `S1-FR-06`, `S2-FR-10`, `S3-FR-06`, `S3-FR-07`, `S4-FR-01`, `S4-FR-02`, `S4-FR-08`, `S4-NFR-03`, `INT-04`, `INT-05`
+  Primary Requirement Coverage: `S1-FR-06`, `S1-FR-07`, `S1-FR-08`, `S2-FR-10`, `S2-FR-12`, `S3-FR-06`, `S3-FR-07`, `S3-FR-08`, `S4-FR-01`, `S4-FR-02`, `S4-FR-08`, `S4-NFR-03`, `INT-04`, `INT-05`, `INT-06`, `INT-07`, `INT-08`, `INT-09`
