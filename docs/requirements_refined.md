@@ -50,7 +50,7 @@ Each requirement uses the following format:
   Requirement: The system shall maintain an immutable audit trail for security-relevant user actions (login, submission, status update, decision update).
   Objective Link: `O3`
 - `S1-FR-07` | Type: `FR` | Module: `S1-M3`
-  Requirement: The system shall provide centralized auth validation for internal subsystem requests from S2 and S3 before protected operations proceed.
+  Requirement: The system shall provide centralized auth validation for internal subsystem requests from S2, S3, and S4 before protected operations proceed.
   Objective Link: `O1`, `O3`
 - `S1-FR-08` | Type: `FR` | Module: `S1-M3`
   Requirement: The system shall return standardized auth decision payloads to consuming subsystems with allow/deny result, role claims, and audit correlation metadata.
@@ -174,6 +174,9 @@ Each requirement uses the following format:
 - `S4-FR-03` | Type: `FR` | Module: `S4-M1`
   Requirement: The system shall generate a final application outcome report after case closure.
   Objective Link: `O3`
+- `S4-FR-11` | Type: `FR` | Module: `S4-M1`
+  Requirement: The system shall require successful auth validation from S1 before protected officer/admin actions (review queue access, approve/reject/request-correction, report generation, dashboard access).
+  Objective Link: `O3`
 - `S4-NFR-01` | Type: `NFR` | Module: `S4-M1`
   Requirement: Officer actions shall be transaction-safe and prevent partial decision updates.
   Objective Link: `O3`
@@ -242,12 +245,18 @@ Each requirement uses the following format:
 - `INT-09` | Type: `INT` | Module: `Handoff S1 -> S3`
   Requirement: S1 shall return an `AuthValidationResult` to S3 with decision outcome and audit correlation metadata for verification workflow logging.
   Objective Link: `O1`, `O3`
+- `INT-10` | Type: `INT` | Module: `Handoff S4 -> S1`
+  Requirement: S4 shall send an `AuthValidationRequest` to S1 before protected officer/admin actions.
+  Objective Link: `O3`
+- `INT-11` | Type: `INT` | Module: `Handoff S1 -> S4`
+  Requirement: S1 shall return an `AuthValidationResult` to S4 with allow/deny decision, subject identity, role claims, expiry, denial reason, and audit reference.
+  Objective Link: `O3`
 
 ## Team Ownership (4 Members)
 - Member 1
   Primary Subsystem: `S1: Identity, Access, and Security`
   Core Modules: `S1-M1`, `S1-M2`, `S1-M3`
-  Dependencies/Handoffs: Provides centralized auth validation interfaces for S2 and S3 (`INT-06`, `INT-07`, `INT-08`, `INT-09`); provides RBAC and audit foundation to all subsystems.
+  Dependencies/Handoffs: Provides centralized auth validation interfaces for S2, S3, and S4 (`INT-06`, `INT-07`, `INT-08`, `INT-09`, `INT-10`, `INT-11`); provides RBAC and audit foundation to all subsystems.
 - Member 2
   Primary Subsystem: `S2: Applicant Portal and Guidance`
   Core Modules: `S2-M1`, `S2-M2`, `S2-M3`
@@ -259,7 +268,7 @@ Each requirement uses the following format:
 - Member 4
   Primary Subsystem: `S4: Officer Workflow, Decisioning, and Analytics`
   Core Modules: `S4-M1`, `S4-M2`, `S4-M3`
-  Dependencies/Handoffs: Consumes verification output from S3; sends decision records to S2; aggregates KPI events from S2/S3/S4 (`INT-04`, `INT-05`).
+  Dependencies/Handoffs: Requests and consumes auth validation from S1 (`INT-10`, `INT-11`); consumes verification output from S3; sends decision records to S2; aggregates KPI events from S2/S3/S4 (`INT-04`, `INT-05`).
 
 ## Objective Traceability Matrix
 - O1: Online platform with AI pre-verification
@@ -270,4 +279,4 @@ Each requirement uses the following format:
   Primary Requirement Coverage: `S2-FR-03`, `S2-FR-04`, `S2-FR-06`, `S2-FR-09`, `S3-FR-02`, `S3-FR-04`, `S4-FR-07`, `S4-FR-08`, `S4-FR-09`, `INT-05`
 - O3: Reduce processing time within 6 months
   Measurable Target: Cycle-time trend decreases from baseline within 6 months after implementation.
-  Primary Requirement Coverage: `S1-FR-06`, `S1-FR-07`, `S1-FR-08`, `S2-FR-10`, `S2-FR-12`, `S3-FR-06`, `S3-FR-07`, `S3-FR-08`, `S4-FR-01`, `S4-FR-02`, `S4-FR-08`, `S4-NFR-03`, `INT-04`, `INT-05`, `INT-06`, `INT-07`, `INT-08`, `INT-09`
+  Primary Requirement Coverage: `S1-FR-06`, `S1-FR-07`, `S1-FR-08`, `S2-FR-10`, `S2-FR-12`, `S3-FR-06`, `S3-FR-07`, `S3-FR-08`, `S4-FR-01`, `S4-FR-02`, `S4-FR-08`, `S4-FR-11`, `S4-NFR-03`, `INT-04`, `INT-05`, `INT-06`, `INT-07`, `INT-08`, `INT-09`, `INT-10`, `INT-11`
