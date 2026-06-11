@@ -1,0 +1,38 @@
+enum VerificationJobStatus {
+  queued
+  processing
+  success
+  failed
+  dead_lettered
+
+  @@map("verification_job_status")
+}
+
+enum VerificationOverallResult {
+  passed
+  issues_found
+  low_confidence
+  failed
+
+  @@map("verification_overall_result")
+}
+
+enum VerificationIssueType {
+  missing_document
+  invalid_file
+  unreadable_document
+  field_mismatch
+  low_confidence
+  other
+
+  @@map("verification_issue_type")
+}
+
+enum VerificationIssueSeverity {
+  low
+  medium
+  high
+  critical
+
+  @@map("verification_issue_severity")
+}

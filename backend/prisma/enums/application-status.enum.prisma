@@ -1,0 +1,68 @@
+enum ApplicationStatus {
+  draft
+  submitted
+  verification_queued
+  verification_in_progress
+  verification_complete
+  pending_officer_review
+  manual_prescreening_required
+  correction_required
+  approved
+  rejected
+
+  @@map("application_status")
+}
+
+enum ApplicationVersionStatus {
+  draft
+  submitted
+  superseded
+
+  @@map("application_version_status")
+}
+
+enum OfficerDecisionType {
+  approved
+  rejected
+  correction_required
+
+  @@map("officer_decision_type")
+}
+
+enum PremiseType {
+  mall
+  hotel
+  resort
+  hall
+  corner_shop
+  middle_shop
+  warehouse
+  other
+
+  @@map("premise_type")
+}
+
+enum FloorLevel {
+  upper
+  ground
+  mezzanine
+  parking
+  other
+
+  @@map("floor_level")
+}
+
+enum EntertainmentType {
+  dance
+  live_band
+  karaoke
+  amusement
+  cinema
+  kiddy_rides
+  simulator_bounce_play
+  laser_disc
+  bowling
+  snooker_billiard_pool
+
+  @@map("entertainment_type")
+}

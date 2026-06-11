@@ -1,0 +1,32 @@
+model Application {
+  id                          String                @id @default(uuid()) @db.Uuid
+  applicantUserId             String                @map("applicant_user_id") @db.Uuid
+  applicationNo               String                @unique @map("application_no")
+  status                      ApplicationStatus     @default(draft)
+  currentVersionNumber        Int                   @default(1) @map("current_version_number")
+  currentApplicationVersionId String?               @unique @map("current_application_version_id") @db.Uuid
+  applicantFullName           String?               @map("applicant_full_name")
+  applicantIcNo               String?               @map("applicant_ic_no")
+  businessName                String?               @map("business_name")
+  businessRegistrationNo      String?               @map("business_registration_no")
+  premiseAddress              String?               @map("premise_address")
+  premiseType                 PremiseType?          @map("premise_type")
+  floorLevel                  FloorLevel?           @map("floor_level")
+  entertainmentType           EntertainmentType?    @map("entertainment_type")
+  submittedAt                 DateTime?             @map("submitted_at")
+  decidedAt                   DateTime?             @map("decided_at")
+  createdAt                   DateTime              @default(now()) @map("created_at")
+  updatedAt                   DateTime              @updatedAt @map("updated_at")
+  applicant                   User                  @relation("ApplicantApplications", fields: [applicantUserId], references: [id])
+  currentApplicationVersion   ApplicationVersion?   @relation("CurrentApplicationVersion", fields: [currentApplicationVersionId], references: [id])
+  versions                    ApplicationVersion[]  @relation("ApplicationVersions")
+  officerDecisions            OfficerDecision[]
+  appointments                Appointment[]
+  auditLogs                   AuditLog[]
+  kpiEvents                   KpiEvent[]
+
+  @@index([applicantUserId])
+  @@index([status])
+  @@index([currentApplicationVersionId])
+  @@map("applications")
+}

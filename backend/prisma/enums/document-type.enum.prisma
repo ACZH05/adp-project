@@ -1,0 +1,22 @@
+enum DocumentType {
+  application_form_original
+  applicant_passport_photo
+  identity_card_copy
+  business_registration_copy
+  tenancy_agreement
+  land_tax_copy
+  floor_plan
+  site_plan
+  business_license_copy
+  premise_photos
+
+  @@map("document_type")
+}
+
+enum DocumentUploadStatus {
+  uploaded
+  replaced
+  removed
+
+  @@map("document_upload_status")
+}

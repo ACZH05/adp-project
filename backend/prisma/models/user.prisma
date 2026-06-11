@@ -1,0 +1,23 @@
+model User {
+  id                         String             @id @default(uuid()) @db.Uuid
+  email                      String             @unique
+  passwordHash               String             @map("password_hash")
+  fullName                   String             @map("full_name")
+  phoneNumber                String?            @map("phone_number")
+  role                       Role
+  accountStatus              AccountStatus      @default(active) @map("account_status")
+  lastLoginAt                DateTime?          @map("last_login_at")
+  createdAt                  DateTime           @default(now()) @map("created_at")
+  updatedAt                  DateTime           @updatedAt @map("updated_at")
+  submittedApplications      Application[]      @relation("ApplicantApplications")
+  sentAdminInvitations       AdminInvitation[]  @relation("AdminInvitationSender")
+  acceptedAdminInvitations   AdminInvitation[]  @relation("AdminInvitationAccepter")
+  madeOfficerDecisions       OfficerDecision[]  @relation("OfficerUserDecisions")
+  requestedAppointments      Appointment[]      @relation("ApplicantAppointments")
+  decidedAppointments        Appointment[]      @relation("AppointmentDecider")
+  auditLogs                  AuditLog[]         @relation("AuditActor")
+
+  @@index([role])
+  @@index([accountStatus])
+  @@map("users")
+}

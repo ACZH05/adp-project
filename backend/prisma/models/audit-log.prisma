@@ -1,0 +1,25 @@
+model AuditLog {
+  id                String           @id @default(uuid()) @db.Uuid
+  actorUserId       String?          @map("actor_user_id") @db.Uuid
+  action            AuditAction
+  targetEntityType  String           @map("target_entity_type")
+  targetEntityId    String?          @map("target_entity_id") @db.Uuid
+  applicationId     String?          @map("application_id") @db.Uuid
+  verificationJobId String?          @map("verification_job_id") @db.Uuid
+  appointmentId     String?          @map("appointment_id") @db.Uuid
+  ipAddress         String?          @map("ip_address")
+  userAgent         String?          @map("user_agent")
+  metadata          Json?
+  createdAt         DateTime         @default(now()) @map("created_at")
+  actor             User?            @relation("AuditActor", fields: [actorUserId], references: [id])
+  application       Application?     @relation(fields: [applicationId], references: [id])
+  verificationJob   VerificationJob? @relation(fields: [verificationJobId], references: [id])
+  appointment       Appointment?     @relation(fields: [appointmentId], references: [id])
+
+  @@index([actorUserId])
+  @@index([applicationId])
+  @@index([verificationJobId])
+  @@index([appointmentId])
+  @@index([targetEntityType, targetEntityId])
+  @@map("audit_logs")
+}

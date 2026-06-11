@@ -1,0 +1,23 @@
+enum AuditAction {
+  login
+  submit_application
+  upload_document
+  run_verification
+  officer_decision
+  appointment_decision
+  notification_sent
+
+  @@map("audit_action")
+}
+
+enum KpiEventType {
+  application_submitted
+  verification_completed
+  correction_required
+  approved
+  rejected
+  appointment_requested
+  appointment_decided
+
+  @@map("kpi_event_type")
+}

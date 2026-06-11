@@ -1,0 +1,24 @@
+/// Prisma cannot express the filtered unique index that enforces one active job per
+/// application version when `job_status` is `queued` or `processing`.
+/// Create that partial unique index in a SQL migration.
+model VerificationJob {
+  id                   String                @id @default(uuid()) @db.Uuid
+  applicationVersionId String                @map("application_version_id") @db.Uuid
+  bullmqJobId          String                @unique @map("bullmq_job_id")
+  jobStatus            VerificationJobStatus @default(queued) @map("job_status")
+  attemptCount         Int                   @default(0) @map("attempt_count")
+  failureReason        String?               @map("failure_reason")
+  queuedAt             DateTime              @default(now()) @map("queued_at")
+  startedAt            DateTime?             @map("started_at")
+  completedAt          DateTime?             @map("completed_at")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  applicationVersion   ApplicationVersion    @relation(fields: [applicationVersionId], references: [id])
+  verificationReport   VerificationReport?
+  auditLogs            AuditLog[]
+  kpiEvents            KpiEvent[]
+
+  @@index([applicationVersionId])
+  @@index([jobStatus])
+  @@map("verification_jobs")
+}

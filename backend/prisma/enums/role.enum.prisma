@@ -1,0 +1,32 @@
+enum Role {
+  applicant
+  officer
+  admin
+
+  @@map("role")
+}
+
+enum AccountStatus {
+  active
+  invited
+  suspended
+  disabled
+
+  @@map("account_status")
+}
+
+enum AdminInvitationRole {
+  officer
+  admin
+
+  @@map("admin_invitation_role")
+}
+
+enum AdminInvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+
+  @@map("admin_invitation_status")
+}

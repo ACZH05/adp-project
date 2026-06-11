@@ -1,0 +1,26 @@
+model KpiEvent {
+  id                  String           @id @default(uuid()) @db.Uuid
+  eventType           KpiEventType     @map("event_type")
+  applicationId       String?          @map("application_id") @db.Uuid
+  verificationJobId   String?          @map("verification_job_id") @db.Uuid
+  appointmentId       String?          @map("appointment_id") @db.Uuid
+  queueWaitMs         Int?             @map("queue_wait_ms")
+  aiProcessingMs      Int?             @map("ai_processing_ms")
+  officerProcessingMs Int?             @map("officer_processing_ms")
+  retryCount          Int?             @map("retry_count")
+  isDeadLetter        Boolean          @default(false) @map("is_dead_letter")
+  isIncomplete        Boolean          @default(false) @map("is_incomplete")
+  occurredAt          DateTime         @default(now()) @map("occurred_at")
+  metadata            Json?
+  createdAt           DateTime         @default(now()) @map("created_at")
+  application         Application?     @relation(fields: [applicationId], references: [id])
+  verificationJob     VerificationJob? @relation(fields: [verificationJobId], references: [id])
+  appointment         Appointment?     @relation(fields: [appointmentId], references: [id])
+
+  @@index([eventType])
+  @@index([applicationId])
+  @@index([verificationJobId])
+  @@index([appointmentId])
+  @@index([occurredAt])
+  @@map("kpi_events")
+}

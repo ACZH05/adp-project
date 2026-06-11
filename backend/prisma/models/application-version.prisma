@@ -1,0 +1,24 @@
+model ApplicationVersion {
+  id                  String                @id @default(uuid()) @db.Uuid
+  applicationId       String                @map("application_id") @db.Uuid
+  versionNumber       Int                   @map("version_number")
+  versionStatus       ApplicationVersionStatus @default(draft) @map("version_status")
+  formSnapshot        Json                  @map("form_snapshot")
+  applicantNote       String?               @map("applicant_note")
+  previousVersionId   String?               @map("previous_version_id") @db.Uuid
+  submittedAt         DateTime?             @map("submitted_at")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+  application         Application           @relation("ApplicationVersions", fields: [applicationId], references: [id])
+  previousVersion     ApplicationVersion?   @relation("ApplicationVersionHistory", fields: [previousVersionId], references: [id])
+  nextVersions        ApplicationVersion[]  @relation("ApplicationVersionHistory")
+  currentVersionOf    Application?          @relation("CurrentApplicationVersion")
+  documents           ApplicationDocument[]
+  verificationJobs    VerificationJob[]
+  officerDecisions    OfficerDecision[]
+
+  @@unique([applicationId, versionNumber])
+  @@index([applicationId])
+  @@index([previousVersionId])
+  @@map("application_versions")
+}

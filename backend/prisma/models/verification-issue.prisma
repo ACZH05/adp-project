@@ -1,0 +1,20 @@
+model VerificationIssue {
+  id                    String                    @id @default(uuid()) @db.Uuid
+  verificationReportId  String                    @map("verification_report_id") @db.Uuid
+  applicationDocumentId String?                   @map("application_document_id") @db.Uuid
+  issueType             VerificationIssueType     @map("issue_type")
+  issueSeverity         VerificationIssueSeverity @map("issue_severity")
+  fieldName             String?                   @map("field_name")
+  documentType          DocumentType?             @map("document_type")
+  message               String
+  recommendedCorrection String?                   @map("recommended_correction")
+  ruleHit               String?                   @map("rule_hit")
+  modelRationale        String?                   @map("model_rationale")
+  createdAt             DateTime                  @default(now()) @map("created_at")
+  verificationReport    VerificationReport        @relation(fields: [verificationReportId], references: [id])
+  applicationDocument   ApplicationDocument?      @relation(fields: [applicationDocumentId], references: [id])
+
+  @@index([verificationReportId])
+  @@index([applicationDocumentId])
+  @@map("verification_issues")
+}

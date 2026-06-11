@@ -1,0 +1,8 @@
+enum AppointmentStatus {
+  pending
+  approved
+  rejected
+  unavailable
+
+  @@map("appointment_status")
+}
