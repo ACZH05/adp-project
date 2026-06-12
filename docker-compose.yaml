@@ -4,3 +4,13 @@ services:
     container_name: adp-redis
     ports:
       - "6379:6379"
+
+  backend:
+    build: ./backend
+    container_name: adp-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
