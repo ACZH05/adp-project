@@ -12,5 +12,18 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend:/src
+      - backend_node_modules:/src/node_modules
+      - backend_pnpm_store:/root/.local/share/pnpm/store
+    environment:
+      CI: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      REDIS_HOST: redis
     depends_on:
       - redis
+
+volumes:
+  backend_node_modules:
+  backend_pnpm_store:
