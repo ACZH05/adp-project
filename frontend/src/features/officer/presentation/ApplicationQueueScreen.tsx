@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { SideNav } from './SideNav';
 import { KPICard } from './KPICard';
 import { FilterBar } from './FilterBar';
@@ -8,6 +9,7 @@ import { DataTable } from './DataTable';
 import { mockApplications, getQueueStats, Application } from '../data/mockApplications';
 
 export const ApplicationQueueScreen: React.FC = () => {
+  const router = useRouter();
   // State
   const [appsList, setAppsList] = useState<Application[]>(mockApplications);
   const [searchQuery, setSearchQuery] = useState('');
@@ -151,8 +153,7 @@ export const ApplicationQueueScreen: React.FC = () => {
   };
 
   const handleRowClick = (app: Application) => {
-    showToast(`Loading Application Review: ${app.id} (${app.applicantName})`, 'info');
-    // Navigation would happen here under a full implementation
+    router.push(`/officer/queue/${app.id}`);
   };
 
   const handleExport = () => {
