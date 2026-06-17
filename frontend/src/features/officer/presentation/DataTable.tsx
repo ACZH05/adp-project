@@ -114,7 +114,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                   AI Confidence {renderSortIcon('aiConfidence')}
                 </div>
               </th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-6 py-4">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -128,7 +128,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                   <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-20"></div></td>
                   <td className="px-6 py-4"><div className="h-5 bg-slate-200 rounded-full w-16"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-16"></div></td>
-                  <td className="px-6 py-4 text-right"><div className="h-8 bg-slate-200 rounded w-20 ml-auto"></div></td>
+                  <td className="px-6 py-4"><div className="h-8 bg-slate-200 rounded w-20"></div></td>
                 </tr>
               ))
             ) : applications.length === 0 ? (
@@ -171,7 +171,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                     <td className="px-6 py-4">
                       {renderConfidenceScore(app.aiConfidence)}
                     </td>
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => onRowClick(app)}
                         className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-container px-3 py-1.5 rounded-default border border-border-muted hover:border-primary/30 transition-colors group-hover:bg-white bg-slate-50"

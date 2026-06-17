@@ -321,7 +321,7 @@ export const ApplicationQueueScreen: React.FC = () => {
 
       {/* Floating Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-inverse-surface text-inverse-on-surface text-sm font-semibold rounded-default shadow-lg border border-white/10 animate-slide-up">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-white text-text-main text-sm font-semibold rounded-default shadow-lg border border-border-muted animate-slide-up">
           {toast.type === 'success' ? (
             <div className="w-5 h-5 rounded-full bg-success text-white flex items-center justify-center">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -373,30 +373,44 @@ export const ApplicationQueueScreen: React.FC = () => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-text-muted uppercase">License Type</label>
-                <select
-                  value={newType}
-                  onChange={(e) => setNewType(e.target.value)}
-                  className="w-full h-11 px-3 border border-border-muted rounded-default text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                >
-                  <option value="Entertainment License">Entertainment License</option>
-                  <option value="Food Establishment License">Food Establishment License</option>
-                  <option value="Liquor License">Liquor License</option>
-                  <option value="Business Registration">Business Registration</option>
-                </select>
+                <div className="relative flex items-center w-full">
+                  <select
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value)}
+                    className="w-full h-11 pl-3 pr-10 border border-border-muted rounded-default text-sm appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                  >
+                    <option value="Entertainment License">Entertainment License</option>
+                    <option value="Food Establishment License">Food Establishment License</option>
+                    <option value="Liquor License">Liquor License</option>
+                    <option value="Business Registration">Business Registration</option>
+                  </select>
+                  <div className="absolute right-3 pointer-events-none text-text-muted">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-text-muted uppercase">Status</label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as 'Pending' | 'AI-Ready' | 'Flagged')}
-                    className="w-full h-11 px-3 border border-border-muted rounded-default text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="AI-Ready">AI-Ready</option>
-                    <option value="Flagged">Flagged</option>
-                  </select>
+                  <div className="relative flex items-center w-full">
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value as 'Pending' | 'AI-Ready' | 'Flagged')}
+                      className="w-full h-11 pl-3 pr-10 border border-border-muted rounded-default text-sm appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="AI-Ready">AI-Ready</option>
+                      <option value="Flagged">Flagged</option>
+                    </select>
+                    <div className="absolute right-3 pointer-events-none text-text-muted">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

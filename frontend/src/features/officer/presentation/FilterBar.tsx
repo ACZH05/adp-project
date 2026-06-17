@@ -87,48 +87,69 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           {/* Status filter */}
           <div className="flex flex-col gap-1 min-w-[140px]">
             <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Status</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => onStatusFilterChange(e.target.value)}
-              className="h-9 px-3 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-            >
-              <option value="all">All Active</option>
-              <option value="Pending">Pending</option>
-              <option value="AI-Ready">AI-Ready</option>
-              <option value="Flagged">Flagged</option>
-              <option value="Processed">Processed</option>
-            </select>
+            <div className="relative flex items-center w-full">
+              <select
+                value={statusFilter}
+                onChange={(e) => onStatusFilterChange(e.target.value)}
+                className="w-full h-9 pl-3 pr-8 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              >
+                <option value="all">All Active</option>
+                <option value="Pending">Pending</option>
+                <option value="AI-Ready">AI-Ready</option>
+                <option value="Flagged">Flagged</option>
+                <option value="Processed">Processed</option>
+              </select>
+              <div className="absolute right-2.5 pointer-events-none text-text-muted">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {/* License type filter */}
           <div className="flex flex-col gap-1 min-w-[180px]">
             <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">License Type</span>
-            <select
-              value={typeFilter}
-              onChange={(e) => onTypeFilterChange(e.target.value)}
-              className="h-9 px-3 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-            >
-              <option value="all">All Types</option>
-              <option value="Entertainment License">Entertainment License</option>
-              <option value="Food Establishment License">Food Establishment License</option>
-              <option value="Liquor License">Liquor License</option>
-              <option value="Business Registration">Business Registration</option>
-            </select>
+            <div className="relative flex items-center w-full">
+              <select
+                value={typeFilter}
+                onChange={(e) => onTypeFilterChange(e.target.value)}
+                className="w-full h-9 pl-3 pr-8 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              >
+                <option value="all">All Types</option>
+                <option value="Entertainment License">Entertainment License</option>
+                <option value="Food Establishment License">Food Establishment License</option>
+                <option value="Liquor License">Liquor License</option>
+                <option value="Business Registration">Business Registration</option>
+              </select>
+              <div className="absolute right-2.5 pointer-events-none text-text-muted">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
           </div>
 
           {/* AI Score filter */}
           <div className="flex flex-col gap-1 min-w-[160px]">
             <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">AI Score Range</span>
-            <select
-              value={scoreFilter}
-              onChange={(e) => onScoreFilterChange(e.target.value)}
-              className="h-9 px-3 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-            >
-              <option value="all">All Scores</option>
-              <option value="high">High (&gt;80%)</option>
-              <option value="medium">Medium (50% - 80%)</option>
-              <option value="low">Low (&lt;50%)</option>
-            </select>
+            <div className="relative flex items-center w-full">
+              <select
+                value={scoreFilter}
+                onChange={(e) => onScoreFilterChange(e.target.value)}
+                className="w-full h-9 pl-3 pr-8 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              >
+                <option value="all">All Scores</option>
+                <option value="high">High (&gt;80%)</option>
+                <option value="medium">Medium (50% - 80%)</option>
+                <option value="low">Low (&lt;50%)</option>
+              </select>
+              <div className="absolute right-2.5 pointer-events-none text-text-muted">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
