@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
 import { TextInput } from '@/src/shared/components/TextInput';
 
 export const AuthCard: React.FC = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +20,7 @@ export const AuthCard: React.FC = () => {
       setError('Please enter a valid email address format.');
     } else {
       setError(undefined);
-      // Logic for auth would go here
+      router.push('/dashboard');
     }
   };
 
