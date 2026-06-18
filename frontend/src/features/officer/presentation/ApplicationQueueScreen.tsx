@@ -14,7 +14,6 @@ export const ApplicationQueueScreen: React.FC = () => {
   const [appsList, setAppsList] = useState<Application[]>(mockApplications);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
   const [scoreFilter, setScoreFilter] = useState('all');
 
   // Sorting State
@@ -46,11 +45,6 @@ export const ApplicationQueueScreen: React.FC = () => {
     setIsLoading(true);
   };
 
-  const handleTypeFilterChange = (val: string) => {
-    setTypeFilter(val);
-    setIsLoading(true);
-  };
-
   const handleScoreFilterChange = (val: string) => {
     setScoreFilter(val);
     setIsLoading(true);
@@ -62,7 +56,7 @@ export const ApplicationQueueScreen: React.FC = () => {
       setIsLoading(false);
     }, 450);
     return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, typeFilter, scoreFilter, sortField, sortDirection]);
+  }, [searchQuery, statusFilter, scoreFilter, sortField, sortDirection]);
 
   // Show toast notification
   const showToast = (message: string, type: 'success' | 'info' = 'success') => {
@@ -103,10 +97,7 @@ export const ApplicationQueueScreen: React.FC = () => {
       result = result.filter(app => app.status === statusFilter);
     }
 
-    // 3. Filter by License Type
-    if (typeFilter !== 'all') {
-      result = result.filter(app => app.licenseType === typeFilter);
-    }
+
 
     // 4. Filter by AI Score Range
     if (scoreFilter !== 'all') {
@@ -139,15 +130,14 @@ export const ApplicationQueueScreen: React.FC = () => {
     }
 
     return result;
-  }, [appsList, searchQuery, statusFilter, typeFilter, scoreFilter, sortField, sortDirection]);
+  }, [appsList, searchQuery, statusFilter, scoreFilter, sortField, sortDirection]);
 
-  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || typeFilter !== 'all' || scoreFilter !== 'all';
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || scoreFilter !== 'all';
 
   const clearFilters = () => {
     setIsLoading(true);
     setSearchQuery('');
     setStatusFilter('all');
-    setTypeFilter('all');
     setScoreFilter('all');
     showToast('Filters cleared', 'info');
   };
@@ -293,8 +283,6 @@ export const ApplicationQueueScreen: React.FC = () => {
           onSearchChange={handleSearchChange}
           statusFilter={statusFilter}
           onStatusFilterChange={handleStatusFilterChange}
-          typeFilter={typeFilter}
-          onTypeFilterChange={handleTypeFilterChange}
           scoreFilter={scoreFilter}
           onScoreFilterChange={handleScoreFilterChange}
           onClearFilters={clearFilters}
@@ -370,23 +358,12 @@ export const ApplicationQueueScreen: React.FC = () => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-text-muted uppercase">License Type</label>
-                <div className="relative flex items-center w-full">
-                  <select
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value)}
-                    className="w-full h-11 pl-3 pr-10 border border-border-muted rounded-default text-sm appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
-                  >
-                    <option value="Entertainment License">Entertainment License</option>
-                    <option value="Food Establishment License">Food Establishment License</option>
-                    <option value="Liquor License">Liquor License</option>
-                    <option value="Business Registration">Business Registration</option>
-                  </select>
-                  <div className="absolute right-3 pointer-events-none text-text-muted">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </div>
-                </div>
+                <input
+                  type="text"
+                  readOnly
+                  value={newType}
+                  className="w-full h-11 px-3 border border-border-muted rounded-default text-sm bg-slate-50 text-text-muted focus:outline-none"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

@@ -102,7 +102,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             <tr className="bg-surface-container border-b border-border-muted text-xs font-bold text-text-muted uppercase tracking-wider select-none">
               <th className="px-6 py-4">Ref ID</th>
               <th className="px-6 py-4">Applicant Name</th>
-              <th className="px-6 py-4">License Type</th>
+
               <th className="px-6 py-4 cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => onSort('submissionDate')}>
                 <div className="flex items-center">
                   Submission Date {renderSortIcon('submissionDate')}
@@ -124,7 +124,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                 <tr key={`skeleton-${index}`} className="animate-pulse">
                   <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-24"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-32"></div></td>
-                  <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-40"></div></td>
+
                   <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-20"></div></td>
                   <td className="px-6 py-4"><div className="h-5 bg-slate-200 rounded-full w-16"></div></td>
                   <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-16"></div></td>
@@ -133,7 +133,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               ))
             ) : applications.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-text-muted font-medium">
+                <td colSpan={6} className="px-6 py-12 text-center text-text-muted font-medium">
                   No applications found matching the search or filters.
                 </td>
               </tr>
@@ -159,9 +159,7 @@ export const DataTable: React.FC<DataTableProps> = ({
                     <td className="px-6 py-4 font-semibold text-text-main">
                       {app.applicantName}
                     </td>
-                    <td className="px-6 py-4 text-text-muted">
-                      {app.licenseType}
-                    </td>
+
                     <td className="px-6 py-4 text-text-muted">
                       {app.submissionDate}
                     </td>

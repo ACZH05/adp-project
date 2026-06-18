@@ -7,8 +7,6 @@ interface FilterBarProps {
   onSearchChange: (value: string) => void;
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
-  typeFilter: string;
-  onTypeFilterChange: (value: string) => void;
   scoreFilter: string;
   onScoreFilterChange: (value: string) => void;
   onClearFilters: () => void;
@@ -22,8 +20,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
-  typeFilter,
-  onTypeFilterChange,
   scoreFilter,
   onScoreFilterChange,
   onClearFilters,
@@ -107,28 +103,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             </div>
           </div>
 
-          {/* License type filter */}
-          <div className="flex flex-col gap-1 min-w-[180px]">
-            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">License Type</span>
-            <div className="relative flex items-center w-full">
-              <select
-                value={typeFilter}
-                onChange={(e) => onTypeFilterChange(e.target.value)}
-                className="w-full h-9 pl-3 pr-8 bg-white border border-border-muted rounded-default text-xs font-semibold text-text-main appearance-none focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-              >
-                <option value="all">All Types</option>
-                <option value="Entertainment License">Entertainment License</option>
-                <option value="Food Establishment License">Food Establishment License</option>
-                <option value="Liquor License">Liquor License</option>
-                <option value="Business Registration">Business Registration</option>
-              </select>
-              <div className="absolute right-2.5 pointer-events-none text-text-muted">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </div>
-            </div>
-          </div>
+
 
           {/* AI Score filter */}
           <div className="flex flex-col gap-1 min-w-[160px]">

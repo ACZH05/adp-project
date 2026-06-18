@@ -29,7 +29,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-002",
     applicantName: "Tan Kah Kee",
-    licenseType: "Food Establishment License",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-17",
     status: "Flagged",
     aiConfidence: 38,
@@ -47,7 +47,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-004",
     applicantName: "Fatimah Abdullah",
-    licenseType: "Business Registration",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-16",
     status: "Processed",
     aiConfidence: 88,
@@ -56,7 +56,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-005",
     applicantName: "Johnathan Smith",
-    licenseType: "Food Establishment License",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-15",
     status: "Flagged",
     aiConfidence: 42,
@@ -74,7 +74,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-007",
     applicantName: "David Wong",
-    licenseType: "Liquor License",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-14",
     status: "Processed",
     aiConfidence: 95,
@@ -92,7 +92,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-009",
     applicantName: "Rachel Green",
-    licenseType: "Business Registration",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-13",
     status: "Processed",
     aiConfidence: 91,
@@ -101,7 +101,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-010",
     applicantName: "Ahmad Bin Ibrahim",
-    licenseType: "Food Establishment License",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-13",
     status: "Flagged",
     aiConfidence: 25,
@@ -110,7 +110,7 @@ export const mockApplications: Application[] = [
   {
     id: "APP-2026-011",
     applicantName: "Jessica Jung",
-    licenseType: "Liquor License",
+    licenseType: "Entertainment License",
     submissionDate: "2026-06-12",
     status: "AI-Ready",
     aiConfidence: 82,
