@@ -61,7 +61,7 @@ export const DataTable: React.FC<DataTableProps> = ({
         </span>
       );
     }
-    
+
     // Default: Pending status
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-info/10 text-info">

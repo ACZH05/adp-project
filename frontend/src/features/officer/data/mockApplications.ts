@@ -3,7 +3,7 @@ export interface Application {
   applicantName: string;
   licenseType: string;
   submissionDate: string;
-  status: 'Pending' | 'AI-Ready' | 'Flagged' | 'Processed';
+  status: 'Pending' | 'AI-Ready' | 'Flagged' | 'Processed' | 'Rejected';
   aiConfidence: number;
   isUrgent: boolean;
 }

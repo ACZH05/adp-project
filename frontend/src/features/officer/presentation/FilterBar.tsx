@@ -49,7 +49,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             }
           />
         </div>
-        
+
         <div className="flex items-center gap-3 self-end md:self-auto">
           {onExport && (
             <Button

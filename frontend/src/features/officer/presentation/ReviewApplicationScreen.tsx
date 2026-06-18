@@ -225,10 +225,16 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
             </div>
           )}
           {toast.type === 'info' && (
-            <div className="w-5 h-5 rounded-full bg-info text-white flex items-center justify-center shrink-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
+            <div className="w-5 h-5 shrink-0 relative flex items-center justify-center">
+              {/* Spinner track */}
+              <svg className="absolute inset-0 w-full h-full animate-spin" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8" stroke="#CBD5E1" strokeWidth="2.5" />
+                <path
+                  d="M10 2 A8 8 0 0 1 18 10"
+                  stroke="#0369A1"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </div>
           )}

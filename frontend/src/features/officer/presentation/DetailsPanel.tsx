@@ -146,7 +146,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({ application, onViewD
       </div>
 
       {/* Tab Contents */}
-      <div className="flex-1 p-6 overflow-y-auto max-h-[550px]">
+      <div className="flex-1 p-6 overflow-y-auto">
         {activeTab === 'applicant' && (
           <div className="flex flex-col">
             {renderInfoRow('Applicant Full Name', application.applicantName)}
@@ -224,7 +224,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({ application, onViewD
                     </button>
                     <a
                       href="#"
-                      onClick={(e) => { e.preventDefault(); alert(`Downloading ${doc.fileName}...`); }}
+                      onClick={(e) => e.preventDefault()}
                       className="font-bold text-text-muted hover:underline hover:text-text-main text-xs"
                     >
                       Download

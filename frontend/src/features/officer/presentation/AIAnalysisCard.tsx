@@ -146,7 +146,7 @@ export const AIAnalysisCard: React.FC<AIAnalysisCardProps> = ({ application }) =
       </div>
 
       {/* AI Findings List */}
-      <div className="flex-1 p-6 overflow-y-auto max-h-[480px]">
+<div className="flex-1 p-6 overflow-y-auto">
         <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">
           Verification Discrepancies ({aiFindings.length})
         </h3>
@@ -179,9 +179,18 @@ export const AIAnalysisCard: React.FC<AIAnalysisCardProps> = ({ application }) =
                     `}>
                       {getCategoryIcon(finding.category)}
                     </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-text-main leading-tight">{finding.title}</h4>
-                      <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider mt-0.5 block">{finding.category}</span>
+                  <div>
+                      <h4 className="text-sm font-bold text-text-main leading-tight">
+                        {finding.severity === 'High' ? 'Critical Discrepancy Detected' : finding.title}
+                      </h4>
+                      {finding.severity === 'High' && (
+                        <span className="text-[10px] text-error font-bold uppercase tracking-wider mt-0.5 block">
+                          {finding.title}
+                        </span>
+                      )}
+                      {finding.severity !== 'High' && (
+                        <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider mt-0.5 block">{finding.category}</span>
+                      )}
                     </div>
                   </div>
                   {getSeverityBadge(finding.severity)}

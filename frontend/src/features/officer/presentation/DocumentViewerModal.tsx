@@ -288,7 +288,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
           <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
             <span className="text-[10px] text-text-muted font-bold tracking-wider uppercase">Document ID: {document.id}</span>
             <button
-              onClick={() => alert(`Downloading file: ${document.fileName}`)}
+              onClick={() => {}}
               className="px-4 py-2 bg-primary hover:bg-primary-container text-white text-xs font-bold rounded-default cursor-pointer transition-colors flex items-center gap-1.5"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

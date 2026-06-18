@@ -228,10 +228,6 @@ export const ApplicationQueueScreen: React.FC = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">
               Application Queue
             </h1>
-            <div className="hidden sm:flex items-center gap-2 text-xs font-semibold bg-primary-container/10 border border-primary-container/20 text-primary px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
-              Live Queue Connected
-            </div>
           </div>
         </div>
 

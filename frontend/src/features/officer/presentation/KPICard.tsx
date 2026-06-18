@@ -51,7 +51,7 @@ export const KPICard: React.FC<KPICardProps> = ({
             {subtitle}
           </span>
         </div>
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${styles.iconBg}`}>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${styles.iconBg}`}>
           {icon}
         </div>
       </div>

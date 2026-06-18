@@ -41,9 +41,9 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
     if (modalType === 'correction') {
       onDecision('Flagged', 'Correction Requested', `Reason: ${reason}\n\nNotes: ${notes}`);
     } else {
-      onDecision('Flagged', 'Application Rejected', `Reason: ${reason}\n\nNotes: ${notes}`);
+      onDecision('Rejected', 'Application Rejected', `Reason: ${reason}\n\nNotes: ${notes}`);
     }
-    
+
     setModalType(null);
   };
 
@@ -98,22 +98,22 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
               Approve Application
             </Button>
 
-            <Button
+            {/* Request Correction — Red-outline per spec */}
+            <button
               onClick={() => handleOpenModal('correction')}
-              variant="secondary"
-              className="w-full justify-center border border-border-muted text-primary bg-slate-50 hover:bg-slate-100 h-11 py-0 cursor-pointer"
+              className="w-full justify-center h-11 flex items-center rounded-default border border-error text-error bg-transparent hover:bg-error/5 text-sm font-semibold transition-colors cursor-pointer"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-2">
                 <polyline points="23 4 23 10 17 10" />
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
               </svg>
               Request Correction
-            </Button>
+            </button>
 
-            <Button
+            {/* Reject — Ghost per spec */}
+            <button
               onClick={() => handleOpenModal('rejection')}
-              variant="danger"
-              className="w-full justify-center border border-error text-error hover:bg-error/5 h-11 py-0 cursor-pointer"
+              className="w-full justify-center h-11 flex items-center rounded-default border-0 text-text-muted bg-transparent hover:text-error hover:bg-error/5 text-sm font-semibold transition-colors cursor-pointer"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-2">
                 <circle cx="12" cy="12" r="10" />
@@ -121,33 +121,37 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
                 <line x1="9" y1="9" x2="15" y2="15" />
               </svg>
               Reject Case
-            </Button>
+            </button>
           </div>
         )}
       </Card>
 
       {/* Audit History Timeline */}
-      <Card className="bg-white border border-border-muted shadow-sm flex flex-col gap-4 flex-1 min-h-[200px]">
-        <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider">Case History & Audit</h3>
-        <div className="relative border-l border-slate-200 pl-4 ml-2 flex flex-col gap-5 overflow-y-auto max-h-[300px]">
-          {application.auditLogs.map((log) => (
-            <div key={log.id} className="relative flex flex-col gap-1 text-xs">
-              {/* Timeline marker */}
-              <div className="absolute -left-[22px] top-1 w-3.5 h-3.5 rounded-full border-2 border-white bg-primary shrink-0 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-text-main">{log.action}</span>
-                <span className="text-[10px] text-text-muted font-semibold">{log.timestamp}</span>
-              </div>
-              <span className="text-[10px] text-text-muted font-medium">By: {log.user}</span>
-              {log.notes && (
-                <div className="mt-1.5 p-2 bg-slate-50 border border-slate-100 rounded text-[11px] text-text-muted leading-relaxed whitespace-pre-wrap font-medium">
-                  {log.notes}
+      <Card padding={false} className="bg-white border border-border-muted shadow-sm flex flex-col gap-4 flex-1 min-h-[200px] py-6">
+        <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider px-6">Case History & Audit</h3>
+        <div className="overflow-y-auto max-h-[300px] pl-[17px] pr-6">
+          <div className="relative py-1 flex flex-col gap-5">
+            {/* Timeline Line */}
+            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-200 pointer-events-none" />
+            {application.auditLogs.map((log) => (
+              <div key={log.id} className="relative pl-6 flex flex-col gap-1 text-xs">
+                {/* Timeline marker */}
+                <div className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full border-2 border-white bg-primary shrink-0 flex items-center justify-center z-10">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                 </div>
-              )}
-            </div>
-          ))}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-text-main">{log.action}</span>
+                  <span className="text-[10px] text-text-muted font-semibold">{log.timestamp}</span>
+                </div>
+                <span className="text-[10px] text-text-muted font-medium">By: {log.user}</span>
+                {log.notes && (
+                  <div className="mt-1.5 p-2 bg-slate-50 border border-slate-100 rounded text-[11px] text-text-muted leading-relaxed whitespace-pre-wrap font-medium">
+                    {log.notes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </Card>
 
@@ -204,7 +208,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
                   className={`
                     px-4 py-2.5 text-xs font-semibold text-white rounded-default transition-colors
                     ${modalType === 'correction'
-                      ? 'bg-warning hover:bg-warning/90 disabled:bg-warning/40'
+                      ? 'bg-primary hover:bg-primary-container disabled:bg-primary/40'
                       : 'bg-error hover:bg-error/90 disabled:bg-error/40'}
                   `}
                 >
