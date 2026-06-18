@@ -20,8 +20,12 @@ export const AuthCard: React.FC = () => {
       setError('Please enter a valid email address format.');
     } else {
       setError(undefined);
-      // Simulating successful login redirect to Officer Portal Queue
-      router.push('/officer/queue');
+      // Simulating login redirection based on user role/email
+      if (email.toLowerCase().includes('officer')) {
+        router.push('/officer/queue');
+      } else {
+        router.push('/dashboard');
+      }
     }
   };
 
