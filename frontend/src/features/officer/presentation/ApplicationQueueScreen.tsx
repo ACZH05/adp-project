@@ -7,6 +7,8 @@ import { KPICard } from './KPICard';
 import { FilterBar } from './FilterBar';
 import { DataTable } from './DataTable';
 import { mockApplications, getQueueStats, Application } from '../data/mockApplications';
+import { useToast } from '@/src/shared/hooks/useToast';
+import { ToastNotification } from '@/src/shared/components/ToastNotification';
 
 export const ApplicationQueueScreen: React.FC = () => {
   const router = useRouter();
@@ -24,7 +26,7 @@ export const ApplicationQueueScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Toast notification state
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const { toast, showToast } = useToast();
 
   // Add New Case Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,14 +59,6 @@ export const ApplicationQueueScreen: React.FC = () => {
     }, 450);
     return () => clearTimeout(timer);
   }, [searchQuery, statusFilter, scoreFilter, sortField, sortDirection]);
-
-  // Show toast notification
-  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 4000);
-  };
 
   // KPI Queue Stats
   const globalStats = useMemo(() => getQueueStats(appsList), [appsList]);
@@ -304,26 +298,7 @@ export const ApplicationQueueScreen: React.FC = () => {
         </section>
       </main>
 
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-white text-text-main text-sm font-semibold rounded-default shadow-lg border border-border-muted animate-slide-up">
-          {toast.type === 'success' ? (
-            <div className="w-5 h-5 rounded-full bg-success text-white flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-info text-white flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-            </div>
-          )}
-          <span>{toast.message}</span>
-        </div>
-      )}
+      <ToastNotification toast={toast} />
 
       {/* Manual Case Creation Modal */}
       {isModalOpen && (
