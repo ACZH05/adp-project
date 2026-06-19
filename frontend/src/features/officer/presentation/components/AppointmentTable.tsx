@@ -10,7 +10,6 @@ interface AppointmentTableProps {
 }
 
 export const AppointmentTable: React.FC<AppointmentTableProps> = ({ appointments, onApprove, onReschedule }) => {
-
   return (
     <div className="w-full flex flex-col h-full gap-4">
       <div className="border-b border-slate-200 pb-2">
