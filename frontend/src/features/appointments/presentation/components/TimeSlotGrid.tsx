@@ -48,6 +48,7 @@ export const TimeSlotGrid: React.FC<TimeSlotGridProps> = ({ slots, selectedSlotI
       })}
     </div>
   );
+
   return (
     <div className="flex flex-col gap-6">
       {morningSlots.length > 0 && (
