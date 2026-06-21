@@ -34,8 +34,6 @@ export const BookAppointmentScreen: React.FC = () => {
     router.back();
   };
 
-  const selectedSlot = MOCK_SLOTS.find(s => s.id === selectedSlotId);
-
   return (
     <div className="min-h-screen bg-background font-sans flex flex-col">
       <TopNav />
