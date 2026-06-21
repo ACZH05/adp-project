@@ -1,5 +1,7 @@
 import React from 'react';
 import { OfficerAppointment } from '../../data/mockAppointments';
+import { StatusBadge } from '@/src/shared/components/StatusBadge';
+import { Button } from '@/src/shared/components/Button';
 
 interface AppointmentTableProps {
   appointments: OfficerAppointment[];
@@ -8,22 +10,10 @@ interface AppointmentTableProps {
 }
 
 export const AppointmentTable: React.FC<AppointmentTableProps> = ({ appointments, onApprove, onReschedule }) => {
-  const renderStatusBadge = (status: OfficerAppointment['status']) => {
-    if (status === 'Approved') {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/10 text-success">Approved</span>;
-    }
-    if (status === 'Conflicted') {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error/10 text-error">Conflicted</span>;
-    }
-    if (status === 'Completed') {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-text-muted">Completed</span>;
-    }
-    return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-info/10 text-info">Pending</span>;
-  };
 
   return (
-    <div className="bg-white border border-border-muted rounded-lg shadow-sm overflow-hidden w-full flex flex-col h-full">
-      <div className="px-5 py-4 border-b border-border-muted bg-surface-container-low">
+    <div className="w-full flex flex-col h-full gap-4">
+      <div className="border-b border-slate-200 pb-2">
         <h3 className="font-bold text-primary">Pending Appointments</h3>
       </div>
       <div className="overflow-x-auto flex-1">
@@ -59,23 +49,25 @@ export const AppointmentTable: React.FC<AppointmentTableProps> = ({ appointments
                     <span className="text-text-main">{app.type}</span>
                   </td>
                   <td className="px-5 py-3">
-                    {renderStatusBadge(app.status)}
+                    <StatusBadge status={app.status} />
                   </td>
                   <td className="px-5 py-3 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
-                      <button 
+                      <Button
+                        variant="primary"
                         onClick={() => onApprove(app.id)}
                         disabled={app.status !== 'Pending' && app.status !== 'Conflicted'}
-                        className="px-3 py-1.5 text-xs font-bold bg-primary text-white rounded hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="px-3 py-1.5 text-xs h-8"
                       >
                         Approve
-                      </button>
-                      <button 
+                      </Button>
+                      <Button
+                        variant="secondary"
                         onClick={() => onReschedule(app.id)}
-                        className="px-3 py-1.5 text-xs font-bold border border-border-muted text-text-main rounded hover:bg-slate-100 transition-colors"
+                        className="px-3 py-1.5 text-xs h-8"
                       >
                         Reschedule
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

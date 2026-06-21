@@ -50,7 +50,7 @@ export const AppointmentDashboardScreen: React.FC = () => {
         {/* Content Grid */}
         <section className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full items-stretch">
           {/* List View - Comes first per spec */}
-          <div className="xl:col-span-4 flex flex-col">
+          <div className="xl:col-span-4 flex flex-col bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
             <AppointmentTable 
               appointments={appointments.filter(app => app.status === 'Pending' || app.status === 'Conflicted')} 
               onApprove={handleApprove}
@@ -59,7 +59,7 @@ export const AppointmentDashboardScreen: React.FC = () => {
           </div>
 
           {/* Calendar View */}
-          <div className="xl:col-span-8 flex flex-col min-h-[500px]">
+          <div className="xl:col-span-8 flex flex-col min-h-[500px] bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
             <FullCalendar appointments={appointments} />
           </div>
         </section>

@@ -31,7 +31,7 @@ export const FullCalendar: React.FC<FullCalendarProps> = ({ appointments }) => {
   };
 
   return (
-    <div className="bg-white border border-border-muted rounded-lg shadow-sm overflow-hidden flex flex-col h-full min-h-[500px]">
+    <div className="flex flex-col h-full min-h-[500px]">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border-muted bg-surface-container-low shrink-0">
         <button onClick={handlePrevMonth} className="p-1.5 hover:bg-surface-variant rounded text-text-muted transition-colors">
@@ -64,12 +64,12 @@ export const FullCalendar: React.FC<FullCalendarProps> = ({ appointments }) => {
           const hasConflict = dayApps.some(a => a.status === 'Conflicted');
 
           return (
-            <div key={day} className={`bg-white p-2 flex flex-col gap-1 transition-colors hover:bg-slate-50 min-h-[100px] ${hasConflict ? 'bg-error-container/40 border border-error/20' : ''}`}>
+            <div key={day} className={`bg-white p-2 flex flex-col gap-1 transition-colors hover:bg-slate-50 min-h-[100px] ${hasConflict ? 'bg-warning/10 border border-warning/20' : ''}`}>
               <div className="flex items-center justify-between">
-                <span className={`text-sm font-semibold ${hasConflict ? 'text-error' : 'text-text-main'}`}>{day}</span>
+                <span className={`text-sm font-semibold ${hasConflict ? 'text-warning' : 'text-text-main'}`}>{day}</span>
                 <div className="flex items-center gap-1.5">
                   {hasConflict && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-error">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-warning">
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                       <line x1="12" y1="9" x2="12" y2="13" />
                       <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -86,7 +86,7 @@ export const FullCalendar: React.FC<FullCalendarProps> = ({ appointments }) => {
                 {dayApps.map(app => {
                   let bgColor = 'bg-info/10 border-info/20 text-info';
                   if (app.status === 'Approved') bgColor = 'bg-success/10 border-success/20 text-success';
-                  if (app.status === 'Conflicted') bgColor = 'bg-error/10 border-error/20 text-error';
+                  if (app.status === 'Conflicted') bgColor = 'bg-warning/10 border-warning/20 text-warning';
 
                   return (
                     <div key={app.id} className={`text-[10px] font-semibold border rounded px-1.5 py-1 truncate ${bgColor}`} title={`${app.time} - ${app.applicantName}`}>

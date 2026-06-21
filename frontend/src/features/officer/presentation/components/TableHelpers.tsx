@@ -1,36 +1,11 @@
 import React from 'react';
 import { Application } from '../../data/mockApplications';
 
+import { StatusBadge } from '@/src/shared/components/StatusBadge';
+
 // Helper to render colored status badges
 export const renderStatusBadge = (status: Application['status']) => {
-  if (status === 'Processed') {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-text-muted">
-        Processed
-      </span>
-    );
-  }
-  if (status === 'AI-Ready') {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/10 text-success">
-        AI-Ready
-      </span>
-    );
-  }
-  if (status === 'Flagged') {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error/10 text-error">
-        Flagged
-      </span>
-    );
-  }
-
-  // Default: Pending status
-  return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-info/10 text-info">
-      Pending
-    </span>
-  );
+  return <StatusBadge status={status} />;
 };
 
 // Helper to render AI Score bar
