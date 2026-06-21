@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
+import { TopNav } from '@/src/shared/components/TopNav';
 import { WizardStepper } from './components/WizardStepper';
 import { Step1ApplicantInfo } from './components/Step1ApplicantInfo';
 import { Step2BusinessInfo } from './components/Step2BusinessInfo';
@@ -369,35 +370,40 @@ export const WizardPage: React.FC = () => {
 
   if (isSubmitted) {
     return (
-      <div className="flex items-center justify-center min-h-[80vh] p-4">
-        <Card className="w-full max-w-[540px] text-center shadow-lg border border-border-muted p-8">
-          <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center text-success mx-auto mb-6">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-primary tracking-tight">Application Submitted Successfully</h1>
-          <p className="text-sm text-text-muted mt-3 leading-relaxed">
-            Your entertainment license application has been registered under Reference ID:{' '}
-            <code className="bg-surface-container px-2 py-0.5 rounded text-primary font-mono font-semibold text-xs">
-              {referenceId}
-            </code>
-          </p>
-          <p className="text-sm text-text-muted mt-2 leading-relaxed">
-            A <strong>VerificationJobPayload</strong> has been enqueued to the AI Processing Engine. You can track automated scans and officer approvals on your dashboard.
-          </p>
-          <div className="mt-8 flex justify-center">
-            <Button onClick={handleExit} className="px-6 py-2.5">
-              Go to Dashboard
-            </Button>
-          </div>
-        </Card>
+      <div className="w-full min-h-screen flex flex-col bg-background">
+        <TopNav />
+        <div className="flex items-center justify-center flex-1 p-4">
+          <Card className="w-full max-w-[540px] text-center shadow-lg border border-border-muted p-8">
+            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center text-success mx-auto mb-6">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-primary tracking-tight">Application Submitted Successfully</h1>
+            <p className="text-sm text-text-muted mt-3 leading-relaxed">
+              Your entertainment license application has been registered under Reference ID:{' '}
+              <code className="bg-surface-container px-2 py-0.5 rounded text-primary font-mono font-semibold text-xs">
+                {referenceId}
+              </code>
+            </p>
+            <p className="text-sm text-text-muted mt-2 leading-relaxed">
+              A <strong>VerificationJobPayload</strong> has been enqueued to the AI Processing Engine. You can track automated scans and officer approvals on your dashboard.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <Button onClick={handleExit} className="px-6 py-2.5">
+                Go to Dashboard
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+    <div className="w-full min-h-screen flex flex-col bg-background">
+      <TopNav />
+      <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
       {/* Top Wizard Header */}
       <div className="flex items-center justify-between border-b border-border-muted pb-4 flex-wrap gap-4">
         <div>
@@ -546,6 +552,7 @@ export const WizardPage: React.FC = () => {
           </div>
         </form>
       </div>
+    </div>
     </div>
   );
 };
