@@ -24,7 +24,7 @@ export const AuthCard: React.FC = () => {
       if (email.toLowerCase().includes('officer')) {
         router.push('/officer/queue');
       } else {
-        router.push('/dashboard');
+        router.push('/applicant/dashboard');
       }
     }
   };
