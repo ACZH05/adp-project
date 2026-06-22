@@ -18,6 +18,7 @@ export interface WizardFormData {
   postcode: string;
   cityDistrict: string;
   premiseType: string;
+  otherPremiseType: string;
   floorLevel: string;
 
   primaryType: string;
@@ -58,10 +59,18 @@ const validateStep1 = (formData: WizardFormData, stepErrors: Record<string, stri
 const validateStep2 = (formData: WizardFormData, stepErrors: Record<string, string>) => {
   if (!formData.businessName.trim()) stepErrors.businessName = 'Business Name is required';
   if (!formData.regNumber.trim()) stepErrors.regNumber = 'Registration Number is required';
-  if (!formData.position.trim()) stepErrors.position = 'Your Position is required';
+  if (!formData.position.trim()) {
+    stepErrors.position = 'Your Position is required';
+  } else if (!/^[a-zA-Z\s]+$/.test(formData.position.trim())) {
+    stepErrors.position = 'Your Position / Role should contain letters only';
+  }
   if (!formData.regDate) stepErrors.regDate = 'Registration Date is required';
   if (!formData.expiryDate) stepErrors.expiryDate = 'Expiry Date is required';
-  if (!formData.businessPhone.trim()) stepErrors.businessPhone = 'Business Phone is required';
+  if (!formData.businessPhone.trim()) {
+    stepErrors.businessPhone = 'Business Phone is required';
+  } else if (/[a-zA-Z]/.test(formData.businessPhone)) {
+    stepErrors.businessPhone = 'Business Phone number should contain numbers only';
+  }
   if (!formData.businessAddress.trim()) stepErrors.businessAddress = 'Business Registered Address is required';
 };
 
@@ -73,7 +82,11 @@ const validateStep3 = (formData: WizardFormData, stepErrors: Record<string, stri
     stepErrors.postcode = 'Postcode must be exactly 5 digits';
   }
   if (!formData.cityDistrict.trim()) stepErrors.cityDistrict = 'Postcode is invalid or not detected';
-  if (!formData.premiseType) stepErrors.premiseType = 'Premise Type is required';
+  if (!formData.premiseType) {
+    stepErrors.premiseType = 'Premise Type is required';
+  } else if (formData.premiseType === 'Other' && !formData.otherPremiseType.trim()) {
+    stepErrors.otherPremiseType = 'Please specify your premise type';
+  }
   if (!formData.floorLevel.trim()) stepErrors.floorLevel = 'Floor Level is required';
 };
 

@@ -13,7 +13,51 @@ import { Step4EntertainmentDetails } from './components/Step4EntertainmentDetail
 import { Step5DocumentUpload, UploadedFile } from './components/Step5DocumentUpload';
 import { Step6Declaration } from './components/Step6Declaration';
 
+<<<<<<< HEAD
 import { WizardFormData, validateWizardStep } from '../utils/wizardValidation';
+=======
+// Interfaces for Wizard Data
+interface WizardFormData {
+  // Step 1: Applicant
+  fullName: string;
+  icPassport: string;
+  dob: string;
+  email: string;
+  contactNumber: string;
+  residentialAddress: string;
+
+  // Step 2: Business
+  businessName: string;
+  position: string;
+  businessPhone: string;
+  regDate: string;
+  expiryDate: string;
+  regNumber: string;
+  businessAddress: string;
+
+  // Step 3: Premise
+  premiseAddress: string;
+  postcode: string;
+  cityDistrict: string;
+  premiseType: string;
+  otherPremiseType: string;
+  floorLevel: string;
+
+  // Step 4: Entertainment
+  primaryType: string;
+  quantityCapacity: string;
+  quantityUnit: string;
+  requestedDuration: string;
+  operatingHoursStart: string;
+  operatingHoursEnd: string;
+
+  // Step 6: Declaration
+  signatoryName: string;
+  signatoryIc: string;
+  companyName: string;
+  acceptedDeclaration: boolean;
+}
+>>>>>>> s2
 
 const initialFormData: WizardFormData = {
   fullName: '',
@@ -33,6 +77,7 @@ const initialFormData: WizardFormData = {
   postcode: '',
   cityDistrict: '',
   premiseType: '',
+  otherPremiseType: '',
   floorLevel: '',
   primaryType: '',
   quantityCapacity: '',
