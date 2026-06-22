@@ -57,23 +57,18 @@ export const AuthCard: React.FC = () => {
       // Logic for auth would go here
       console.log('Register payload:', signUpPayload);
     } else {
-<<<<<<< HEAD
-      setError(undefined);
-      // Simulating login redirection based on user role/email
-      if (email.toLowerCase().includes('officer')) {
-        router.push('/officer/queue');
-      } else {
-        router.push('/dashboard');
-      }
-=======
       if (!email.includes('@')) {
         newErrors.email = 'Please enter a valid email address format.';
         setErrors(newErrors);
         return;
       }
       setErrors({});
-      // Logic for auth would go here
->>>>>>> 46112f2 (sign up page update)
+      // Simulating login redirection based on user role/email
+      if (email.toLowerCase().includes('officer')) {
+        router.push('/officer/queue');
+      } else {
+        router.push('/dashboard');
+      }
     }
   };
 
