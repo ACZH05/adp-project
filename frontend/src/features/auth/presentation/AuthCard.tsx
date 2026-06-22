@@ -54,8 +54,7 @@ export const AuthCard: React.FC = () => {
         email,
         password
       };
-<<<<<<< HEAD
-=======
+
       // Logic for auth would go here
       console.log('Register payload:', signUpPayload);
     } else {
@@ -65,16 +64,7 @@ export const AuthCard: React.FC = () => {
         return;
       }
       setErrors({});
->>>>>>> 46112f213d47a37065ddd8c4bd545441fde26990
-      // Logic for auth would go here
-      console.log('Register payload:', signUpPayload);
-    } else {
-      if (!email.includes('@')) {
-        newErrors.email = 'Please enter a valid email address format.';
-        setErrors(newErrors);
-        return;
-      }
-      setErrors({});
+      
       // Simulating login redirection based on user role/email
       if (email.toLowerCase().includes('officer')) {
         router.push('/officer/queue');
