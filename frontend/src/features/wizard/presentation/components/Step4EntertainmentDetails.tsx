@@ -1,6 +1,8 @@
 import React from 'react';
 import { TextInput } from '@/src/shared/components/TextInput';
 
+import { StepContainer } from './StepContainer';
+
 interface Step4Props {
   data: {
     primaryType: string;
@@ -20,13 +22,10 @@ export const Step4EntertainmentDetails: React.FC<Step4Props> = ({
   onChange,
 }) => {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-bold text-primary">Entertainment Details</h2>
-        <p className="text-sm text-text-muted mt-1">Provide specific details about the type and operations of the entertainment license.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <StepContainer 
+      title="Entertainment Details" 
+      description="Provide specific details about the type and operations of the entertainment license."
+    >
         <div className="flex flex-col gap-1.5 w-full md:col-span-2">
           <label htmlFor="primaryType" className="text-sm font-semibold text-text-main">
             Primary Entertainment Type <span className="text-error">*</span>
@@ -130,7 +129,6 @@ export const Step4EntertainmentDetails: React.FC<Step4Props> = ({
             required
           />
         </div>
-      </div>
-    </div>
+    </StepContainer>
   );
 };

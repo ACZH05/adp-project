@@ -9,9 +9,9 @@ export const TopNav: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Applications', path: '/dashboard' }, // Links to dashboard as main hub
-    { name: 'Appointments', path: '/dashboard' }, // Links to dashboard/appointments
+    { name: 'Dashboard', path: '/applicant/dashboard' },
+    { name: 'Applications', path: '/applicant/dashboard' }, // Links to dashboard as main hub
+    { name: 'Appointments', path: '/applicant/appointments/book' }, // Links to dashboard/appointments
   ];
 
   const handleSignOut = () => {
@@ -19,8 +19,8 @@ export const TopNav: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') {
-      return pathname === '/dashboard' || pathname === '/wizard';
+    if (path === '/applicant/dashboard') {
+      return pathname === '/applicant/dashboard' || pathname === '/applicant/wizard';
     }
     return pathname === path;
   };
@@ -29,15 +29,15 @@ export const TopNav: React.FC = () => {
     <nav className="w-full bg-primary text-on-primary border-b border-primary-container shadow-sm z-50">
       <div className="max-w-container-max-width mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         {/* Left Side: Logo & Brand */}
-        <div 
-          onClick={() => router.push('/dashboard')} 
+        <div
+          onClick={() => router.push('/applicant/dashboard')}
           className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
         >
           <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center text-white border border-white/10">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <div>
@@ -48,16 +48,16 @@ export const TopNav: React.FC = () => {
 
         {/* Middle: Navigation Links (Desktop) */}
         <div className="hidden md:flex items-center gap-1 h-full">
-          {navLinks.map((link, idx) => {
-            const active = isActive(link.path) && idx === 0; // Highlight Dashboard/Wizard as active for this prototype
+          {navLinks.map((link) => {
+            const active = isActive(link.path);
             return (
               <button
                 key={link.name}
                 onClick={() => router.push(link.path)}
                 className={`
                   px-4 py-2 text-sm font-semibold rounded-default transition-all h-10 flex items-center
-                  ${active 
-                    ? 'bg-white/10 text-white shadow-sm' 
+                  ${active
+                    ? 'bg-white/10 text-white shadow-sm'
                     : 'text-on-primary/75 hover:text-white hover:bg-white/5'}
                 `}
               >
