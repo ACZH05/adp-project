@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surface Colors */
+  --surface: #faf9fd;
+  --surface-dim: #dad9dd;
+  --surface-bright: #faf9fd;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f4f3f7;
+  --surface-container: #efedf1;
+  --surface-container-high: #e9e7eb;
+  --surface-container-highest: #e3e2e6;
+  --on-surface: #1a1b1e;
+  --on-surface-variant: #44474e;
+  
+  /* Primary Colors */
+  --primary: #1B365D;
+  --on-primary: #ffffff;
+  --primary-container: #002046;
+  --on-primary-container: #87a0cd;
+  
+  /* Functional Colors */
+  --success-green: #166534;
+  --warning-amber: #B45309;
+  --error-red: #ba1a1a;
+  --info-blue: #0369A1;
+  
+  /* Text & Border */
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  --border-muted: #CBD5E1;
+  
+  /* Typography */
+  --font-inter: "Inter", sans-serif;
+  --font-courier: "Courier Prime", monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--surface);
+  --color-foreground: var(--on-surface);
+  
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface-variant: var(--on-surface-variant);
+  
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  
+  --color-success: var(--success-green);
+  --color-warning: var(--warning-amber);
+  --color-error: var(--error-red);
+  --color-info: var(--info-blue);
+  
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-border-muted: var(--border-muted);
+  
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-courier);
+  
+  --radius-sm: 0.125rem;
+  --radius-default: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-inter);
+}
+
+@layer base {
+  * {
+    @apply border-border-muted;
+  }
 }
