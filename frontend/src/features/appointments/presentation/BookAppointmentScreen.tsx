@@ -26,7 +26,7 @@ export const BookAppointmentScreen: React.FC = () => {
 
   const handleConfirm = () => {
     // Navigate back to dashboard with success (mock behavior)
-    router.push('/dashboard');
+    router.push('/applicant/dashboard');
   };
 
   const handleBack = () => {
