@@ -9,9 +9,9 @@ export const TopNav: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Applications', path: '/dashboard' }, // Links to dashboard as main hub
-    { name: 'Appointments', path: '/dashboard' }, // Links to dashboard/appointments
+    { name: 'Dashboard', path: '/applicant/dashboard' },
+    { name: 'Applications', path: '/applicant/dashboard' }, // Links to dashboard as main hub
+    { name: 'Appointments', path: '/applicant/dashboard' }, // Links to dashboard/appointments
   ];
 
   const handleSignOut = () => {
@@ -19,8 +19,8 @@ export const TopNav: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    if (path === '/dashboard') {
-      return pathname === '/dashboard' || pathname === '/wizard';
+    if (path === '/applicant/dashboard') {
+      return pathname === '/applicant/dashboard' || pathname === '/applicant/wizard';
     }
     return pathname === path;
   };
@@ -30,7 +30,7 @@ export const TopNav: React.FC = () => {
       <div className="max-w-container-max-width mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         {/* Left Side: Logo & Brand */}
         <div 
-          onClick={() => router.push('/dashboard')} 
+          onClick={() => router.push('/applicant/dashboard')} 
           className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
         >
           <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center text-white border border-white/10">
