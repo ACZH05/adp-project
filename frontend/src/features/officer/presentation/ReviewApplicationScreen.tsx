@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-import { SideNav } from './SideNav';
 import { DetailsPanel } from './DetailsPanel';
 import { AIAnalysisCard } from './AIAnalysisCard';
 import { DecisionPanel } from './DecisionPanel';
@@ -111,14 +110,7 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans">
-      {/* Sidebar Navigation */}
-      <SideNav activePath="/officer/queue" />
-
-      {/* Spacer to prevent main content from sliding under the fixed sidebar on desktop */}
-      <div className="hidden lg:block w-64 shrink-0" />
-
-      {/* Main Content Area */}
+    <>
       <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto gap-6 overflow-hidden">
         
         {/* Breadcrumbs & Header */}
@@ -257,6 +249,6 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
           onClose={handleCloseDoc}
         />
       )}
-    </div>
+    </>
   );
 };

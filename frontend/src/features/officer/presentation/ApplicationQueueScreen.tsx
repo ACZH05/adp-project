@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { SideNav } from './SideNav';
 import { KPICard } from './KPICard';
 import { FilterBar } from './FilterBar';
 import { DataTable } from './DataTable';
@@ -137,7 +136,7 @@ export const ApplicationQueueScreen: React.FC = () => {
   };
 
   const handleRowClick = (app: Application) => {
-    router.push(`/officer/queue/${app.id}`);
+    router.push(`/officer/review/${app.id}`);
   };
 
   const handleExport = () => {
@@ -188,14 +187,7 @@ export const ApplicationQueueScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans">
-      {/* Sidebar Navigation */}
-      <SideNav activePath="/officer/queue" />
-
-      {/* Spacer to prevent main content from sliding under the fixed sidebar on desktop */}
-      <div className="hidden lg:block w-64 shrink-0" />
-
-      {/* Main Content Area */}
+    <>
       <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto gap-6 overflow-hidden">
 
         {/* Header Breadcrumb & Title */}
@@ -407,6 +399,6 @@ export const ApplicationQueueScreen: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
