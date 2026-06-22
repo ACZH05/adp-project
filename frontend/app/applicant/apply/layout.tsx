@@ -4,7 +4,6 @@ import React from 'react';
 import { WizardProvider, useWizard } from '@/src/features/wizard/presentation/WizardContext';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
-import { TopNav } from '@/src/shared/components/TopNav';
 import { WizardStepper } from '@/src/features/wizard/presentation/components/WizardStepper';
 
 function WizardLayoutContent({ children }: { children: React.ReactNode }) {
@@ -51,7 +50,6 @@ function WizardLayoutContent({ children }: { children: React.ReactNode }) {
   if (isSubmitted) {
     return (
       <div className="w-full min-h-screen flex flex-col bg-background">
-        <TopNav />
         <div className="flex items-center justify-center flex-1 p-4">
           <Card className="w-full max-w-[540px] text-center shadow-lg border border-border-muted p-8">
             <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center text-success mx-auto mb-6">
@@ -82,7 +80,6 @@ function WizardLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="w-full min-h-screen flex flex-col bg-background">
-      <TopNav />
       <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
         {/* Top Wizard Header */}
         <div className="flex items-center justify-between border-b border-border-muted pb-4 flex-wrap gap-4">

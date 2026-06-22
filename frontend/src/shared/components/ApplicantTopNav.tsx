@@ -9,9 +9,9 @@ export const ApplicantTopNav: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Applications', path: '/applications' },
-    { name: 'Appointments', path: '/appointments/book' },
+    { name: 'Dashboard', path: '/applicant/dashboard' },
+    { name: 'Applications', path: '/applicant/applications' },
+    { name: 'Appointments', path: '/applicant/appointments' },
   ];
 
   const handleSignOut = () => {

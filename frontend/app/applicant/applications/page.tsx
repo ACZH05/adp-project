@@ -1,5 +1,9 @@
 import { redirect } from 'next/navigation';
 
 export default function ApplicationsPage() {
-  redirect('/dashboard');
+  return (
+    <div>
+      <h1>Applications</h1>
+    </div>
+  )
 }
