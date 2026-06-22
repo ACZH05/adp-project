@@ -208,7 +208,7 @@ export const WizardPage: React.FC = () => {
   // Save Draft & Exit
   const handleSaveAndExit = () => {
     handleSaveDraft();
-    router.push('/dashboard');
+    router.push('/applicant/dashboard');
   };
 
   const [referenceId, setReferenceId] = useState<string>('');
@@ -226,7 +226,7 @@ export const WizardPage: React.FC = () => {
 
   // Return home / dashboard
   const handleExit = () => {
-    router.push('/dashboard');
+    router.push('/applicant/dashboard');
   };
 
   // Sub-title context boxes based on step

@@ -10,7 +10,7 @@ export const DashboardPage: React.FC = () => {
   const router = useRouter();
 
   const handleStartWizard = () => {
-    router.push('/wizard');
+    router.push('/applicant/wizard');
   };
 
   const timelineEvents = [
