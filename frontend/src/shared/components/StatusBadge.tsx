@@ -25,6 +25,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   } else if (s === 'pending') {
     bgColor = 'bg-info/10';
     textColor = 'text-info';
+  } else if (s === 'draft') {
+    bgColor = 'bg-surface-container';
+    textColor = 'text-text-muted';
   }
 
   return (
