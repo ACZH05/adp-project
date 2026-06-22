@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function Page() {
-    redirect('/applicant/dashboard')
+    redirect('/officer/queue')
 }

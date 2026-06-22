@@ -4,13 +4,12 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
-import { TopNav } from '@/src/shared/components/TopNav';
 
 export const DashboardPage: React.FC = () => {
   const router = useRouter();
 
   const handleStartWizard = () => {
-    router.push('/applicant/wizard');
+    router.push('/applicant/apply/1');
   };
 
   const timelineEvents = [
@@ -21,15 +20,13 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-background">
-      <TopNav />
-      <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
-        {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-border-muted pb-4 flex-wrap gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-primary tracking-tight mt-0.5">Application Dashboard</h1>
-            <span className="text-xs font-semibold text-text-muted">Food Establishment License - Ref #FE-2024-88A</span>
-          </div>
+    <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+      {/* Top Header */}
+      <div className="flex items-center justify-between border-b border-border-muted pb-4 flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-primary tracking-tight mt-0.5">Application Dashboard</h1>
+          <span className="text-xs font-semibold text-text-muted">Food Establishment License - Ref #FE-2024-88A</span>
+        </div>
         <div>
           <Button onClick={handleStartWizard} className="flex gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -138,7 +135,6 @@ export const DashboardPage: React.FC = () => {
           </div>
         </Card>
       </div>
-    </div>
     </div>
   );
 };

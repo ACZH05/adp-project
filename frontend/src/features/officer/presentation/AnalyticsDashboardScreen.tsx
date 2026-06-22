@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 
-import { SideNav } from './SideNav';
 import { MetricCard } from './MetricCard';
 import { ChartContainer } from './ChartContainer';
 import { LiveTable } from './LiveTable';
@@ -126,14 +125,7 @@ export const AnalyticsDashboardScreen: React.FC = () => {
   }, [lineDots, chartHeight, yStart]);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans">
-      {/* Sidebar Navigation */}
-      <SideNav activePath="/officer/analytics" />
-
-      {/* Spacer to prevent main content from sliding under the fixed sidebar on desktop */}
-      <div className="hidden lg:block w-64 shrink-0" />
-
-      {/* Main Content Area */}
+    <>
       <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto gap-6 overflow-hidden">
 
         {/* Header Breadcrumb & Controls */}
@@ -533,8 +525,7 @@ export const AnalyticsDashboardScreen: React.FC = () => {
           </>
         )}
       </main>
-
       <ToastNotification toast={toast} />
-    </div>
+    </>
   );
 };

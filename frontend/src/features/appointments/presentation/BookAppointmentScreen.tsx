@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
-import { TopNav } from '@/src/shared/components/TopNav';
 import { CalendarPicker } from './components/CalendarPicker';
 import { TimeSlotGrid, TimeSlot } from './components/TimeSlotGrid';
 
@@ -27,7 +26,7 @@ export const BookAppointmentScreen: React.FC = () => {
 
   const handleConfirm = () => {
     // Navigate back to dashboard with success (mock behavior)
-    router.push('/applicant/dashboard');
+    router.push('/dashboard');
   };
 
   const handleBack = () => {
@@ -35,9 +34,7 @@ export const BookAppointmentScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans flex flex-col">
-      <TopNav />
-      <main className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-8 flex-1">
+    <main className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-8 flex-1">
         {/* Page Header */}
         <div className="flex flex-col border-b border-border-muted pb-6 mb-2">
           <button onClick={handleBack} className="text-xs font-semibold text-text-muted hover:text-primary transition-colors flex items-center gap-1.5 mb-4 w-fit">
@@ -130,6 +127,5 @@ export const BookAppointmentScreen: React.FC = () => {
           </div>
         </div>
       </main>
-    </div>
   );
 };

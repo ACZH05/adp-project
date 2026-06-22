@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import { SideNav } from './SideNav';
 import { FullCalendar } from './components/FullCalendar';
 import { AppointmentTable } from './components/AppointmentTable';
 import { mockOfficerAppointments, OfficerAppointment } from '../data/mockAppointments';
@@ -25,10 +24,7 @@ export const AppointmentDashboardScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans">
-      <SideNav activePath="/officer/appointments" />
-      <div className="hidden lg:block w-64 shrink-0" />
-
+    <>
       <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto gap-6 overflow-hidden">
         {/* Header Breadcrumb & Title */}
         <div className="flex flex-col gap-1.5 shrink-0">
@@ -64,8 +60,7 @@ export const AppointmentDashboardScreen: React.FC = () => {
           </div>
         </section>
       </main>
-
       <ToastNotification toast={toast} />
-    </div>
+    </>
   );
 };

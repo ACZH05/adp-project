@@ -16,7 +16,7 @@ export const LiveTable: React.FC<LiveTableProps> = ({
   const router = useRouter();
 
   const handleRowClick = (id: string) => {
-    router.push(`/officer/queue/${id}`);
+    router.push(`/officer/review/${id}`);
   };
 
   // Generate simulated real-time times based on mock applications

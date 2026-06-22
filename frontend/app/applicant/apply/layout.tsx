@@ -1,78 +1,25 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
+import { WizardProvider, useWizard } from '@/src/features/wizard/presentation/WizardContext';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
-import { WizardStepper } from './components/WizardStepper';
-import { Step1ApplicantInfo } from './components/Step1ApplicantInfo';
-import { Step2BusinessInfo } from './components/Step2BusinessInfo';
-import { Step3PremiseInfo } from './components/Step3PremiseInfo';
-import { Step4EntertainmentDetails } from './components/Step4EntertainmentDetails';
-import { Step5DocumentUpload, UploadedFile } from './components/Step5DocumentUpload';
-import { Step6Declaration } from './components/Step6Declaration';
-import { WizardFormData, validateWizardStep } from '../utils/wizardValidation';
-import { Application, mockApplications } from '@/src/features/officer/data/mockApplications';
+import { WizardStepper } from '@/src/features/wizard/presentation/components/WizardStepper';
 
-const initialFormData: WizardFormData = {
-  fullName: '',
-  icPassport: '',
-  dob: '',
-  email: '',
-  contactNumber: '',
-  residentialAddress: '',
-  businessName: '',
-  position: '',
-  businessPhone: '',
-  regDate: '',
-  expiryDate: '',
-  regNumber: '',
-  businessAddress: '',
-  premiseAddress: '',
-  postcode: '',
-  cityDistrict: '',
-  premiseType: '',
-  otherPremiseType: '',
-  floorLevel: '',
-  primaryType: '',
-  quantityCapacity: '',
-  quantityUnit: '',
-  requestedDuration: '',
-  operatingHoursStart: '',
-  operatingHoursEnd: '',
-  signatoryName: '',
-  signatoryIc: '',
-  companyName: '',
-  acceptedDeclaration: false,
-};
-
-export const WizardPage: React.FC = () => {
-  const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [formData, setFormData] = useState<WizardFormData>(initialFormData);
-  const [documents, setDocuments] = useState<Record<string, UploadedFile | undefined>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saveDraftMessage, setSaveDraftMessage] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-
-  // Load draft on mount if available
-  useEffect(() => {
-    const saved = localStorage.getItem('adp_wizard_draft');
-    if (saved) {
-      try {
-        const { data, step, completed, docs } = JSON.parse(saved);
-        setTimeout(() => {
-          setFormData(data);
-          setCurrentStep(step);
-          setCompletedSteps(completed);
-          setDocuments(docs);
-        }, 0);
-      } catch (e) {
-        console.error('Error loading draft', e);
-      }
-    }
-  }, []);
+function WizardLayoutContent({ children }: { children: React.ReactNode }) {
+  const {
+    currentStep,
+    completedSteps,
+    saveDraftMessage,
+    isSubmitted,
+    referenceId,
+    handleSaveDraft,
+    handleSaveAndExit,
+    handleBack,
+    handleNext,
+    handleSubmit,
+    handleExit,
+  } = useWizard();
 
   const steps = [
     { number: 1, title: 'Applicant Info', description: 'Personal details and credentials' },
@@ -83,153 +30,6 @@ export const WizardPage: React.FC = () => {
     { number: 6, title: 'Declaration', description: 'Legal undertaking and sign-off' },
   ];
 
-  // Helper to update field
-  const handleFieldChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    // Clear error for field
-    if (errors[field]) {
-      setErrors((prev) => {
-        const copy = { ...prev };
-        delete copy[field];
-        return copy;
-      });
-    }
-  };
-
-  // Mock File Upload Animation
-  const handleUploadFile = (key: string, name: string, size: string) => {
-    // 1. Set uploading status
-    setDocuments((prev) => ({
-      ...prev,
-      [key]: {
-        name,
-        size,
-        status: 'uploading',
-        progress: 0,
-      },
-    }));
-
-    // Clear document error
-    if (errors[key]) {
-      setErrors((prev) => {
-        const copy = { ...prev };
-        delete copy[key];
-        return copy;
-      });
-    }
-
-    // 2. Animate upload progress
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      setDocuments((prev) => {
-        const file = prev[key];
-        if (!file) return prev;
-        return {
-          ...prev,
-          [key]: {
-            ...file,
-            progress: currentProgress,
-          },
-        };
-      });
-
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        // Finalize status: mock SSM or Tenancy documents to sometimes have warning labels
-        // simulating AI confidence scoring (e.g. Tenancy Agreement flags as warning)
-        const finalStatus = 'verified';
-        setDocuments((prev) => {
-          const file = prev[key];
-          if (!file) return prev;
-          return {
-            ...prev,
-            [key]: {
-              ...file,
-              status: finalStatus,
-              progress: 100,
-            },
-          };
-        });
-      }
-    }, 100);
-  };
-
-  // Delete file
-  const handleDeleteFile = (key: string) => {
-    setDocuments((prev) => ({
-      ...prev,
-      [key]: undefined,
-    }));
-  };
-
-  // Validate current step
-  const validateStep = (stepNum: number): boolean => {
-    return validateWizardStep(stepNum, formData, documents, setErrors);
-  };
-
-  // Next Action
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (!completedSteps.includes(currentStep)) {
-        setCompletedSteps((prev) => [...prev, currentStep]);
-      }
-      setCurrentStep((prev) => prev + 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  // Back Action
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  // Save Draft Action
-  const handleSaveDraft = () => {
-    const draftPayload = {
-      data: formData,
-      step: currentStep,
-      completed: completedSteps,
-      docs: documents,
-    };
-    localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
-    setSaveDraftMessage('Application draft saved successfully.');
-    setTimeout(() => {
-      setSaveDraftMessage(null);
-    }, 4000);
-  };
-
-  // Save Draft & Exit
-  const handleSaveAndExit = () => {
-    handleSaveDraft();
-    router.push('/applicant/dashboard');
-  };
-
-  const [referenceId, setReferenceId] = useState<string>('');
-
-  // Submit Action
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateStep(6)) {
-      setReferenceId(`ENT-${Math.floor(100000 + Math.random() * 900000)}`);
-      setIsSubmitted(true);
-      // Clean draft
-      localStorage.removeItem('adp_wizard_draft');
-    }
-  };
-
-  // Return home / dashboard
-  const handleExit = () => {
-    router.push('/applicant/dashboard');
-  };
-
-  // Sub-title context boxes based on step
   const getContextInfoBox = () => {
     switch (currentStep) {
       case 1:
@@ -336,50 +136,7 @@ export const WizardPage: React.FC = () => {
           {/* Content Form column */}
           <form onSubmit={handleSubmit} className="md:col-span-8 lg:col-span-9 flex flex-col gap-6">
             <Card className="shadow-sm border border-border-muted p-6 md:p-8 bg-white min-h-[400px]">
-              {/* Step renders */}
-              {currentStep === 1 && (
-                <Step1ApplicantInfo
-                  data={formData}
-                  errors={errors}
-                  onChange={handleFieldChange}
-                />
-              )}
-              {currentStep === 2 && (
-                <Step2BusinessInfo
-                  data={formData}
-                  errors={errors}
-                  onChange={handleFieldChange}
-                />
-              )}
-              {currentStep === 3 && (
-                <Step3PremiseInfo
-                  data={formData}
-                  errors={errors}
-                  onChange={handleFieldChange}
-                />
-              )}
-              {currentStep === 4 && (
-                <Step4EntertainmentDetails
-                  data={formData}
-                  errors={errors}
-                  onChange={handleFieldChange}
-                />
-              )}
-              {currentStep === 5 && (
-                <Step5DocumentUpload
-                  documents={documents}
-                  errors={errors}
-                  onUploadFile={handleUploadFile}
-                  onDeleteFile={handleDeleteFile}
-                />
-              )}
-              {currentStep === 6 && (
-                <Step6Declaration
-                  data={formData}
-                  errors={errors}
-                  onChange={handleFieldChange}
-                />
-              )}
+              {children}
             </Card>
 
             {/* Form Actions Footer */}
@@ -432,4 +189,12 @@ export const WizardPage: React.FC = () => {
       </div>
     </div>
   );
-};
+}
+
+export default function WizardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <WizardProvider>
+      <WizardLayoutContent>{children}</WizardLayoutContent>
+    </WizardProvider>
+  );
+}
