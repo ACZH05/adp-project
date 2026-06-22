@@ -10,8 +10,8 @@ export const TopNav: React.FC = () => {
 
   const navLinks = [
     { name: 'Dashboard', path: '/applicant/dashboard' },
-    { name: 'Applications', path: '/applicant/dashboard' }, // Links to dashboard as main hub
-    { name: 'Appointments', path: '/applicant/appointments/book' }, // Links to dashboard/appointments
+    { name: 'Applications', path: '/applicant/applications' },
+    { name: 'Appointments', path: '/applicant/appointments' },
   ];
 
   const handleSignOut = () => {

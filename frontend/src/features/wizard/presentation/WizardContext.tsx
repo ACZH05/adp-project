@@ -175,7 +175,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCompletedSteps((prev) => [...prev, currentStep]);
       }
       const nextStep = currentStep + 1;
-      router.push(`/apply/${nextStep}`);
+      router.push(`/applicant/apply/${nextStep}`);
       window.scrollTo(0, 0);
     }
   };
@@ -183,7 +183,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const handleBack = () => {
     if (currentStep > 1) {
       const prevStep = currentStep - 1;
-      router.push(`/apply/${prevStep}`);
+      router.push(`/applicant/apply/${prevStep}`);
       window.scrollTo(0, 0);
     }
   };
@@ -204,7 +204,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const handleSaveAndExit = () => {
     handleSaveDraft();
-    router.push('/dashboard');
+    router.push('/applicant/dashboard');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -217,7 +217,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const handleExit = () => {
-    router.push('/dashboard');
+    router.push('/applicant/dashboard');
   };
 
   return (

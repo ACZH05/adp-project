@@ -27,7 +27,7 @@ export default function WizardStepPage() {
   // If the step is out of range, redirect to step 1
   useEffect(() => {
     if (isNaN(step) || step < 1 || step > 6) {
-      router.replace('/apply/1');
+      router.replace('/applicant/apply/1');
     }
   }, [step, router]);
 
