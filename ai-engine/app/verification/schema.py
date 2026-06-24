@@ -1,4 +1,8 @@
-from app.verification.types import VerificationIssue, VerificationResult
+from app.verification.types import (
+    VerificationDocument,
+    VerificationIssue,
+    VerificationResult,
+)
 from pydantic import BaseModel
 
 
@@ -8,7 +12,8 @@ class VerificationRequest(BaseModel):
     application_version_id: str
     applicant_user_id: str
 
-    document_signed_url: list[str]
+    form_data: dict[str, object]
+    documents: list[VerificationDocument]
 
 
 class VerificationResponse(BaseModel):

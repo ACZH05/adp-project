@@ -7,5 +7,5 @@ verificationService = VerificationService()
 
 
 @router.post("/run", response_model=VerificationResponse)
-async def runVerification(payload: VerificationRequest):
+async def runVerification(payload: VerificationRequest) -> VerificationResponse:
     return await verificationService.runVerification(payload)
