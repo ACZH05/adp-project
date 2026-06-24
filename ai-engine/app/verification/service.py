@@ -18,14 +18,13 @@ class VerificationService:
         return VerificationResponse(
             verification_job_id=payload.verification_job_id,
             report=VerificationResult(
-                confidence_score=100,
+                confidence_score=100.0,
                 overall_result="issues_found" if issues else "passed",
+                manual_fallback_required=False,
                 summary=self._build_summary(issues),
                 model_version="rules-mvp-v1",
                 prompt_policy_version="not-applicable",
-                generated_at=datetime.now(timezone.utc)
-                .isoformat()
-                .replace("+00:00", "Z"),
+                generated_at=datetime.now(timezone.utc),
             ),
             issues=issues,
         )

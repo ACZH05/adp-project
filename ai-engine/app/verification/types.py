@@ -1,4 +1,6 @@
+from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -18,25 +20,26 @@ DocumentType = Literal[
 
 
 class VerificationDocument(BaseModel):
-    application_document_id: str = Field(min_length=1)
+    application_document_id: UUID
     document_type: DocumentType
-    signed_url: str = Field(min_length=1)
+    storage_path: str = Field(min_length=1)
     file_name: str = Field(min_length=1)
     file_type: str = Field(min_length=1)
     metadata: dict[str, str] = Field(default_factory=dict)
 
 
 class VerificationResult(BaseModel):
-    confidence_score: int = Field(ge=0, le=100)
+    confidence_score: float = Field(ge=0, le=100)
     overall_result: Literal["passed", "issues_found", "low_confidence", "failed"]
+    manual_fallback_required: bool
     summary: str
     model_version: str
     prompt_policy_version: str
-    generated_at: str
+    generated_at: datetime
 
 
 class VerificationIssue(BaseModel):
-    application_document_id: str | None = None
+    application_document_id: UUID | None = None
     issue_type: Literal[
         "missing_document",
         "invalid_file",
