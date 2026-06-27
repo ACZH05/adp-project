@@ -4,20 +4,10 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
+import { APPLICANT_ROUTES } from '@/src/features/applicant/data/applicantConstants';
+import { mockAppointmentSlots } from '../data/mockAppointments';
 import { CalendarPicker } from './components/CalendarPicker';
-import { TimeSlotGrid, TimeSlot } from './components/TimeSlotGrid';
-
-const MOCK_SLOTS: TimeSlot[] = [
-  { id: '1', time: '09:00 AM', available: false },
-  { id: '2', time: '09:30 AM', available: true },
-  { id: '3', time: '10:00 AM', available: true },
-  { id: '4', time: '10:30 AM', available: true },
-  { id: '5', time: '11:00 AM', available: false },
-  { id: '6', time: '11:30 AM', available: true },
-  { id: '7', time: '02:00 PM', available: true },
-  { id: '8', time: '02:30 PM', available: true },
-  { id: '9', time: '03:00 PM', available: false },
-];
+import { TimeSlotGrid } from './components/TimeSlotGrid';
 
 export const BookAppointmentScreen: React.FC = () => {
   const router = useRouter();
@@ -26,7 +16,7 @@ export const BookAppointmentScreen: React.FC = () => {
 
   const handleConfirm = () => {
     // Navigate back to dashboard with success (mock behavior)
-    router.push('/applicant/dashboard');
+    router.push(APPLICANT_ROUTES.dashboard);
   };
 
   const handleBack = () => {
@@ -91,7 +81,7 @@ export const BookAppointmentScreen: React.FC = () => {
               
               {selectedDate ? (
                 <TimeSlotGrid 
-                  slots={MOCK_SLOTS}
+                  slots={mockAppointmentSlots}
                   selectedSlotId={selectedSlotId}
                   onSlotSelect={setSelectedSlotId}
                 />

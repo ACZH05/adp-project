@@ -1,3 +1,5 @@
+import { REQUIRED_DOCUMENT_TYPES } from '../data/wizardConstants';
+
 export interface WizardFormData {
   fullName: string;
   icPassport: string;
@@ -107,8 +109,7 @@ const validateStep4 = (formData: WizardFormData, stepErrors: Record<string, stri
 };
 
 const validateStep5 = (documents: Record<string, { status?: string } | undefined>, stepErrors: Record<string, string>) => {
-  const requiredDocs = ['passportPhoto', 'icCopy', 'businessReg', 'tenancyAgreement'];
-  requiredDocs.forEach((docKey) => {
+  REQUIRED_DOCUMENT_TYPES.forEach(({ key: docKey }) => {
     const file = documents[docKey];
     if (!file) {
       stepErrors[docKey] = 'This document is required';
