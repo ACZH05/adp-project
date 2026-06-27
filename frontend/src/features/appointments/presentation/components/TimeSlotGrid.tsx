@@ -1,6 +1,6 @@
 import React from 'react';
 
-export interface TimeSlot {
+interface TimeSlot {
   id: string;
   time: string;
   available: boolean;

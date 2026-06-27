@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { APPLICANT_ROUTES } from '@/src/features/applicant/data/applicantConstants';
 import { WizardFormData, validateWizardStep } from '../utils/wizardValidation';
 import { UploadedFile } from './components/Step5DocumentUpload';
 
@@ -58,6 +59,27 @@ const initialFormData: WizardFormData = {
   acceptedDeclaration: false,
 };
 
+interface WizardDraft {
+  data: WizardFormData;
+  completed: number[];
+  docs: Record<string, UploadedFile | undefined>;
+}
+
+const loadWizardDraft = (): WizardDraft | null => {
+  if (typeof window === 'undefined') return null;
+
+  const saved = localStorage.getItem('adp_wizard_draft');
+  if (!saved) return null;
+
+  try {
+    const { data, completed, docs } = JSON.parse(saved) as WizardDraft;
+    return { data, completed, docs };
+  } catch (e) {
+    console.error('Error loading draft', e);
+    return null;
+  }
+};
+
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -67,29 +89,15 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Parse current step from params, default to 1
   const stepParam = params?.step ? Number(params.step) : 1;
   const currentStep = isNaN(stepParam) ? 1 : stepParam;
+  const [draft] = useState(loadWizardDraft);
 
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [formData, setFormData] = useState<WizardFormData>(initialFormData);
-  const [documents, setDocuments] = useState<Record<string, UploadedFile | undefined>>({});
+  const [completedSteps, setCompletedSteps] = useState<number[]>(draft?.completed ?? []);
+  const [formData, setFormData] = useState<WizardFormData>(draft?.data ?? initialFormData);
+  const [documents, setDocuments] = useState<Record<string, UploadedFile | undefined>>(draft?.docs ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveDraftMessage, setSaveDraftMessage] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [referenceId, setReferenceId] = useState<string>('');
-
-  // Load draft on mount if available
-  useEffect(() => {
-    const saved = localStorage.getItem('adp_wizard_draft');
-    if (saved) {
-      try {
-        const { data, step, completed, docs } = JSON.parse(saved);
-        setFormData(data);
-        setCompletedSteps(completed);
-        setDocuments(docs);
-      } catch (e) {
-        console.error('Error loading draft', e);
-      }
-    }
-  }, []);
 
   const handleFieldChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -204,7 +212,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const handleSaveAndExit = () => {
     handleSaveDraft();
-    router.push('/applicant/dashboard');
+    router.push(APPLICANT_ROUTES.dashboard);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -217,7 +225,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const handleExit = () => {
-    router.push('/applicant/dashboard');
+    router.push(APPLICANT_ROUTES.dashboard);
   };
 
   return (

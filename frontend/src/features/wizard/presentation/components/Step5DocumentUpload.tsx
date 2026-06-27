@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { REQUIRED_DOCUMENT_TYPES } from '../../data/wizardConstants';
 
 export interface UploadedFile {
   name: string;
@@ -13,40 +14,6 @@ interface Step5Props {
   onUploadFile: (key: string, name: string, size: string) => void;
   onDeleteFile: (key: string) => void;
 }
-
-interface DocumentTypeConfig {
-  key: string;
-  label: string;
-  description: string;
-  accept: string;
-}
-
-const DOCUMENT_TYPES: DocumentTypeConfig[] = [
-  {
-    key: 'passportPhoto',
-    label: 'Passport-Sized Photo',
-    description: 'Recent photograph with a white background (JPEG/PNG, max 2MB).',
-    accept: 'image/jpeg,image/png',
-  },
-  {
-    key: 'icCopy',
-    label: 'Identity Card / Passport Copy',
-    description: 'Clear copy of front & back of IC or biodata page of Passport (PDF/JPEG/PNG, max 5MB).',
-    accept: 'application/pdf,image/jpeg,image/png',
-  },
-  {
-    key: 'businessReg',
-    label: 'Business Registration Certificate (SSM)',
-    description: 'Full corporate registration document profile (PDF format, max 10MB).',
-    accept: 'application/pdf',
-  },
-  {
-    key: 'tenancyAgreement',
-    label: 'Tenancy Agreement / Premise Usage Proof',
-    description: 'Signed agreement showing permission to use the establishment (PDF, max 10MB).',
-    accept: 'application/pdf',
-  },
-];
 
 export const Step5DocumentUpload: React.FC<Step5Props> = ({
   documents,
@@ -93,7 +60,7 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
       </div>
 
       <div className="flex flex-col gap-6">
-        {DOCUMENT_TYPES.map((docType) => {
+        {REQUIRED_DOCUMENT_TYPES.map((docType) => {
           const file = documents[docType.key];
           const hasError = errors[docType.key];
 
