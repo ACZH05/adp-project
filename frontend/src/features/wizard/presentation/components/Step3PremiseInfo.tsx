@@ -7,6 +7,7 @@ interface Step3Props {
     postcode: string;
     cityDistrict: string;
     premiseType: string;
+    otherPremiseType: string;
     floorLevel: string;
   };
   errors: Record<string, string>;
@@ -159,6 +160,20 @@ export const Step3PremiseInfo: React.FC<Step3Props> = ({
           error={errors.floorLevel}
           required
         />
+
+        {data.premiseType === 'Other' && (
+          <div className="md:col-span-2">
+            <TextInput
+              label="Please Specify Premise Type"
+              id="otherPremiseType"
+              placeholder="e.g. Community Hall, Exhibition Center"
+              value={data.otherPremiseType || ''}
+              onChange={(e) => onChange('otherPremiseType', e.target.value)}
+              error={errors.otherPremiseType}
+              required
+            />
+          </div>
+        )}
       </div>
     </div>
   );

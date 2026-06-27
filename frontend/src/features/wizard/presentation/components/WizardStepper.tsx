@@ -7,7 +7,7 @@ interface Step {
 }
 
 interface WizardStepperProps {
-  steps: Step[];
+  steps: readonly Step[];
   currentStep: number;
   completedSteps: number[];
 }

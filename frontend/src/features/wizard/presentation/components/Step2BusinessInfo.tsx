@@ -1,6 +1,8 @@
 import React from 'react';
 import { TextInput } from '@/src/shared/components/TextInput';
 
+import { StepContainer } from './StepContainer';
+
 interface Step2Props {
   data: {
     businessName: string;
@@ -21,13 +23,10 @@ export const Step2BusinessInfo: React.FC<Step2Props> = ({
   onChange,
 }) => {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-bold text-primary">Business Information</h2>
-        <p className="text-sm text-text-muted mt-1">Please provide the details of your registered business entity.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <StepContainer 
+      title="Business Information" 
+      description="Please provide the details of your registered business entity."
+    >
         <div className="md:col-span-2">
           <TextInput
             label="Business Legal Name"
@@ -115,7 +114,6 @@ export const Step2BusinessInfo: React.FC<Step2Props> = ({
             </p>
           )}
         </div>
-      </div>
-    </div>
+    </StepContainer>
   );
 };

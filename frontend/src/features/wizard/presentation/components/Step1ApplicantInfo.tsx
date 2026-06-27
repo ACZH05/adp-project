@@ -1,6 +1,8 @@
 import React from 'react';
 import { TextInput } from '@/src/shared/components/TextInput';
 
+import { StepContainer } from './StepContainer';
+
 interface Step1Props {
   data: {
     fullName: string;
@@ -20,13 +22,10 @@ export const Step1ApplicantInfo: React.FC<Step1Props> = ({
   onChange,
 }) => {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-bold text-primary">Applicant Information</h2>
-        <p className="text-sm text-text-muted mt-1">Please enter the personal details of the applicant.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <StepContainer 
+      title="Applicant Information" 
+      description="Please enter the personal details of the applicant."
+    >
         <TextInput
           label="Full Name"
           id="fullName"
@@ -103,7 +102,6 @@ export const Step1ApplicantInfo: React.FC<Step1Props> = ({
             </p>
           )}
         </div>
-      </div>
-    </div>
+    </StepContainer>
   );
 };

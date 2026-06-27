@@ -2,17 +2,18 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 
-import { SideNav } from './SideNav';
 import { MetricCard } from './MetricCard';
 import { ChartContainer } from './ChartContainer';
 import { LiveTable } from './LiveTable';
 import { mockAnalyticsData, AnalyticsSummary } from '../data/mockAnalytics';
 import { mockApplications } from '../data/mockApplications';
+import { useToast } from '@/src/shared/hooks/useToast';
+import { ToastNotification } from '@/src/shared/components/ToastNotification';
 
 export const AnalyticsDashboardScreen: React.FC = () => {
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | '12months'>('30days');
   const [isLoading, setIsLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const { toast, showToast } = useToast();
 
   // Chart interactivity states
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
@@ -26,13 +27,6 @@ export const AnalyticsDashboardScreen: React.FC = () => {
     }, 400);
     return () => clearTimeout(timer);
   }, [isLoading]);
-
-  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 4000);
-  };
 
   const currentData = useMemo<AnalyticsSummary>(() => {
     return mockAnalyticsData[dateRange];
@@ -131,14 +125,7 @@ export const AnalyticsDashboardScreen: React.FC = () => {
   }, [lineDots, chartHeight, yStart]);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background text-foreground font-sans">
-      {/* Sidebar Navigation */}
-      <SideNav activePath="/officer/analytics" />
-
-      {/* Spacer to prevent main content from sliding under the fixed sidebar on desktop */}
-      <div className="hidden lg:block w-64 shrink-0" />
-
-      {/* Main Content Area */}
+    <>
       <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto gap-6 overflow-hidden">
 
         {/* Header Breadcrumb & Controls */}
@@ -538,27 +525,7 @@ export const AnalyticsDashboardScreen: React.FC = () => {
           </>
         )}
       </main>
-
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-white text-text-main text-sm font-semibold rounded-default shadow-lg border border-border-muted animate-slide-up">
-          {toast.type === 'success' ? (
-            <div className="w-5 h-5 rounded-full bg-success text-white flex items-center justify-center shrink-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-info text-white flex items-center justify-center shrink-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-            </div>
-          )}
-          <span>{toast.message}</span>
-        </div>
-      )}
-    </div>
+      <ToastNotification toast={toast} />
+    </>
   );
 };

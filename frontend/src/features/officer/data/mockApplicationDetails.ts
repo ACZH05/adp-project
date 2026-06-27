@@ -72,7 +72,7 @@ export interface ApplicationDetail extends Application {
   auditLogs: AuditLogEntry[];
 }
 
-export const mockApplicationDetails: Record<string, ApplicationDetail> = {
+const mockApplicationDetails: Record<string, ApplicationDetail> = {
   "APP-2026-001": {
     id: "APP-2026-001",
     applicantName: "Sarah Lim",
