@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { VerificationModule } from './verification/verification.module';
 import { BullModule } from '@nestjs/bullmq';
+import { SupabaseModule } from './supabase/supabase.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { BullModule } from '@nestjs/bullmq';
       },
     }),
     VerificationModule,
+    SupabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
