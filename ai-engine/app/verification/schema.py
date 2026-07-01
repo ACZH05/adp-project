@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.verification.types import (
+    FormData,
     VerificationDocument,
     VerificationIssue,
     VerificationResult,
@@ -14,8 +15,8 @@ class VerificationRequest(BaseModel):
     application_version_id: UUID
     applicant_user_id: UUID
 
-    form_data: dict[str, object]
-    documents: list[VerificationDocument]
+    form_data: FormData
+    document_refs: list[VerificationDocument]
 
 
 class VerificationResponse(BaseModel):

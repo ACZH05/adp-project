@@ -15,11 +15,11 @@ class DocumentTypeCoverageRule(BaseVerificationRule):
     def evaluate(
         self, payload: VerificationRequest
     ) -> list[VerificationIssue]:
-        if not payload.documents:
+        if not payload.document_refs:
             return []
 
         supplied_types = {
-            document.document_type for document in payload.documents
+            document.document_type for document in payload.document_refs
         }
 
         return [

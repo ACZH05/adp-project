@@ -1,9 +1,34 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+PremiseType = Literal[
+    "Commercial Shop Lot",
+    "Shopping Mall Unit",
+    "Hotel/Resort",
+    "Industrial Warehouse",
+    "Open Space/Outdoor",
+    "Other",
+]
+
+PrimaryEntertainmentType = Literal[
+    "Live Music/Band Performance",
+    "DJ Performance/Dance Club",
+    "Karaoke Louge",
+    "Arcade & Gaming Center",
+    "Theater & Cinema",
+    "Exhibition & Public Show",
+    "Other",
+]
+
+CapacityUnit = Literal[
+    "Pax/Persons",
+    "Tables",
+    "Devices/Stations",
+    "Rooms/Booths",
+]
 
 DocumentType = Literal[
     "application_form_original",
@@ -19,13 +44,44 @@ DocumentType = Literal[
 ]
 
 
+class FormData(BaseModel):
+    fullName: str
+    icPassport: str
+    dob: str
+    email: str
+    contactNumber: str
+    residentialAddress: str
+    businessName: str
+    position: str
+    businessPhone: str
+    regDate: date
+    expiryDate: date
+    regNumber: str
+    businessAddress: str
+    premiseAddress: str
+    postcode: int
+    cityDistrict: str
+    premiseType: PremiseType
+    floorLevel: str
+    primaryType: PrimaryEntertainmentType
+    quantityCapacity: int
+    quantityUnit: CapacityUnit
+    requestedDuration: int
+    operatingHoursStart: int
+    operatingHoursEnd: int
+    signatoryName: str
+    signatoryIc: str
+    companyName: str
+    acceptedDeclaration: bool
+
+
 class VerificationDocument(BaseModel):
     application_document_id: UUID
     document_type: DocumentType
     storage_path: str = Field(min_length=1)
     file_name: str = Field(min_length=1)
     file_type: str = Field(min_length=1)
-    metadata: dict[str, str] = Field(default_factory=dict)
+    signed_url: str
 
 
 class VerificationResult(BaseModel):

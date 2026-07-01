@@ -33,8 +33,7 @@ class VerificationService:
     def _build_summary(issues: list[VerificationIssue]) -> str:
         if not issues:
             return (
-                "All required documents, form fields, and metadata "
-                "consistency checks passed."
+                "All required documents and form field checks passed."
             )
 
         incomplete_fields = sum(
@@ -45,14 +44,9 @@ class VerificationService:
             issue.issue_type == "missing_document"
             for issue in issues
         )
-        consistency_issues = sum(
-            issue.issue_type == "field_mismatch"
-            for issue in issues
-        )
 
         return (
             f"Rule-based verification found {len(issues)} issue(s): "
             f"{incomplete_fields} incomplete form field(s), "
-            f"{document_issues} document issue(s), and "
-            f"{consistency_issues} consistency issue(s)."
+            f"{document_issues} document issue(s)."
         )

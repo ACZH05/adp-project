@@ -52,7 +52,7 @@ class FormCompletenessRule(BaseVerificationRule):
                 rule_hit=f"form_completeness.{field_name}",
             )
             for field_name in REQUIRED_FORM_FIELDS
-            if self._is_missing(payload.form_data.get(field_name))
+            if self._is_missing(getattr(payload.form_data, field_name))
         ]
 
     @staticmethod

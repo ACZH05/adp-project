@@ -7,14 +7,14 @@ class RequiredDocumentsRule(BaseVerificationRule):
     def evaluate(
         self, payload: VerificationRequest
     ) -> list[VerificationIssue]:
-        if payload.documents:
+        if payload.document_refs:
             return []
 
         return [
             VerificationIssue(
                 issue_type="missing_document",
                 issue_severity="high",
-                field_name="documents",
+                field_name="document_refs",
                 message="No documents were supplied for verification.",
                 recommended_correction=(
                     "Upload the required documents and resubmit "

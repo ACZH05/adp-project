@@ -1,5 +1,4 @@
 from app.verification.rules.base_rule import BaseVerificationRule
-from app.verification.rules.consistency_rule import ConsistencyRule
 from app.verification.rules.document_type_coverage_rule import (
     DocumentTypeCoverageRule,
 )
@@ -15,5 +14,4 @@ RULES: tuple[BaseVerificationRule, ...] = (
     RequiredDocumentsRule(),
     DocumentTypeCoverageRule(),
     FormCompletenessRule(),
-    ConsistencyRule(),
 )
