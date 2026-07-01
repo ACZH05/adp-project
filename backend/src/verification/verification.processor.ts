@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { SupabaseService } from '../supabase/supabase.service';
 import { VerificationJobPayload } from './types/verificationJobPayloadType';
 import { VerificationRequestType } from './types/verificationRequestType';
+import { VerificationResultType } from './types/verificationResultType';
 
 type SignedDocumentUrl = {
   path?: string | null;
@@ -16,14 +17,42 @@ export class VerificationConsumer extends WorkerHost {
     super();
   }
 
-  async process(job: Job<VerificationJobPayload, void, string>) {
+  async process(
+    job: Job<VerificationJobPayload, VerificationResultType, string>,
+  ) {
     switch (job.name) {
       case 'verify-application': {
         const request =
           await this.mapVerificationJobPayloadToVerificationRequest(job.data);
-        console.log('Job Data :', request);
+        console.log(request);
+        const result = await this.runVerification(request);
+        return result;
       }
     }
+  }
+
+  private async runVerification(
+    request: VerificationRequestType,
+  ): Promise<VerificationResultType> {
+    const aiEngineUrl = process.env.AI_ENGINE_URL ?? 'http://127.0.0.1';
+    const aiEnginePort = process.env.AI_ENGINE_PORT ?? '8000';
+    const response = await fetch(
+      `${aiEngineUrl.replace(/\/$/, '')}:${aiEnginePort}/verification/run`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(request),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `AI verification failed with ${response.status}: ${await response.text()}`,
+      );
+    }
+
+    const result = (await response.json()) as VerificationResultType;
+    return result;
   }
 
   private async mapVerificationJobPayloadToVerificationRequest(
