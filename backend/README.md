@@ -57,6 +57,14 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
+## OpenAPI
+
+Swagger UI is available at `http://localhost:3000/api`.
+The raw OpenAPI spec is available at `http://localhost:3000/api-json`.
+
+For new routes, use class DTOs for request/response bodies and add minimal
+`@nestjs/swagger` decorators in the controller.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
