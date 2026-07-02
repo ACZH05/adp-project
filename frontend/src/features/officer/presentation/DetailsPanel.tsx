@@ -162,7 +162,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({ application, onViewD
           <div className="flex flex-col">
             <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-2 mt-1 border-b pb-1">Corporate Details</h3>
             {renderInfoRow('Business Legal Name', application.businessName)}
-            {renderInfoRow('ACRA UEN / Reg Number', application.businessRegNumber, true)}
+            {renderInfoRow('SSM Registration Number', application.businessRegNumber, true)}
             {renderInfoRow('Applicant Position', application.businessPosition)}
             {renderInfoRow('Business Contact', application.businessPhone)}
             {renderInfoRow('Registration Date', application.businessRegDate)}

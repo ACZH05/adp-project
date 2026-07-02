@@ -11,8 +11,8 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
   const renderVisualPreview = () => {
     const name = document.name.toLowerCase();
 
-    if (name.includes('card') || name.includes('identity') || name.includes('nric')) {
-      // Draw a Singapore Identity Card (NRIC)
+    if (name.includes('card') || name.includes('identity') || name.includes('nric') || name.includes('ic_')) {
+      // Draw a Malaysian Identity Card (MyKad)
       return (
         <div className="w-full max-w-[380px] aspect-[1.58] border border-sky-200 bg-sky-50/40 rounded-xl p-4 flex flex-col justify-between shadow-md relative overflow-hidden font-sans mx-auto my-6 select-none">
           {/* Card background watermarks/designs */}
@@ -22,11 +22,11 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
           {/* Header */}
           <div className="flex items-start justify-between border-b border-sky-200 pb-2">
             <div>
-              <h4 className="text-[10px] font-bold text-sky-900 tracking-wider">REPUBLIC OF SINGAPORE</h4>
-              <p className="text-[8px] font-bold text-sky-800/60 uppercase">Identity Card</p>
+              <h4 className="text-[10px] font-bold text-sky-900 tracking-wider">KERAJAAN MALAYSIA</h4>
+              <p className="text-[8px] font-bold text-sky-800/60 uppercase">KAD PENGENALAN</p>
             </div>
             <span className="text-[10px] font-mono font-bold text-sky-900 bg-white px-1.5 py-0.5 rounded border border-sky-100">
-              S9012345A
+              900412-01-5678
             </span>
           </div>
 
@@ -55,13 +55,13 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
                 </div>
                 <div>
                   <span className="text-[8px] text-sky-900/60 font-bold block uppercase leading-none">Sex</span>
-                  <span className="font-semibold text-slate-700">F</span>
+                  <span className="font-semibold text-slate-700">P</span>
                 </div>
               </div>
               <div>
                 <span className="text-[8px] text-sky-900/60 font-bold block uppercase leading-none">Address</span>
                 <span className="font-semibold text-slate-700 text-[9px] leading-tight block">
-                  BLK 123 TOA PAYOH LORONG 1,<br />#08-123, SINGAPORE 310123
+                  NO. 15, JALAN KEMBOJA 3,<br />TAMAN KEMBOJA, 81000 KULAI, JOHOR
                 </span>
               </div>
             </div>
@@ -69,18 +69,18 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
 
           {/* Footer watermark details */}
           <div className="text-[7px] text-sky-800/40 font-mono font-semibold flex items-center justify-between mt-1 pt-1.5 border-t border-sky-100">
-            <span>SGP IDENTITY CARD REGISTRY</span>
+            <span>JPN MALAYSIA REGISTRY</span>
             <span>VERIFIED SECURE BY ADP AI</span>
           </div>
         </div>
       );
     }
 
-    if (name.includes('acra') || name.includes('business') || name.includes('corporate')) {
-      // Draw an ACRA corporate certificate profile
+    if (name.includes('acra') || name.includes('ssm') || name.includes('business') || name.includes('corporate')) {
+      // Draw an SSM corporate profile mockup
       return (
         <div className="w-full max-w-[380px] bg-white border border-red-200 rounded-lg p-5 flex flex-col gap-4 shadow-md font-sans mx-auto my-3 relative overflow-hidden select-none">
-          {/* Top ACRA Header */}
+          {/* Top SSM Header */}
           <div className="flex items-center gap-2.5 border-b border-red-100 pb-3">
             <div className="w-9 h-9 rounded-full bg-red-800/10 flex items-center justify-center text-red-800 shrink-0">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -88,9 +88,9 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
               </svg>
             </div>
             <div>
-              <h4 className="text-[11px] font-bold text-red-900 leading-none">ACRA BUSINESS PROFILE</h4>
+              <h4 className="text-[11px] font-bold text-red-900 leading-none">SSM BUSINESS PROFILE</h4>
               <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block mt-1">
-                Accounting and Corporate Regulatory Authority
+                Suruhanjaya Syarikat Malaysia
               </span>
             </div>
           </div>
@@ -98,13 +98,13 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
           {/* Profile fields */}
           <div className="flex flex-col gap-2.5 text-[10px]">
             <div className="flex items-center justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-400 font-bold">Registration No (UEN)</span>
-              <span className="font-mono font-bold text-slate-800">202012345M</span>
+              <span className="text-slate-400 font-bold">Registration No (SSM)</span>
+              <span className="font-mono font-bold text-slate-800">202001012345</span>
             </div>
             <div className="flex flex-col py-1 border-b border-slate-100 gap-0.5">
               <span className="text-slate-400 font-bold">Entity Name</span>
               <span className="font-bold text-red-950 uppercase leading-snug">
-                LIM & TAN ENTERTAINMENT GROUP PTE. LTD.
+                LIM & TAN ENTERTAINMENT GROUP SDN. BHD.
               </span>
             </div>
             <div className="grid grid-cols-2 gap-4 py-1 border-b border-slate-100">
@@ -115,7 +115,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
               <div>
                 <span className="text-slate-400 font-bold block">Entity Status</span>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-success/10 text-success text-[8px] font-bold uppercase tracking-wide">
-                  Live Company
+                  Active Company
                 </span>
               </div>
             </div>
@@ -128,14 +128,14 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
             <div className="flex flex-col py-1 gap-0.5">
               <span className="text-slate-400 font-bold">Registered Office Address</span>
               <span className="font-semibold text-slate-700 leading-tight">
-                10 ANSON ROAD, #26-04 INTERNATIONAL PLAZA, SINGAPORE 079903
+                NO. 8A, JALAN KULAI-KOTA TINGGI, TAMAN PERINDUSTRIAN KULAI, 81000 KULAI, JOHOR
               </span>
             </div>
           </div>
 
           {/* Stamp */}
           <div className="absolute right-4 bottom-4 w-16 h-16 border-2 border-red-500/20 rounded-full flex items-center justify-center -rotate-12 pointer-events-none text-[8px] text-red-500/30 font-bold tracking-wider text-center">
-            ACRA<br />ELECTRONIC<br />CERTIFICATE
+            SSM<br />ELECTRONIC<br />PROFILE
           </div>
         </div>
       );
@@ -151,13 +151,13 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ docume
           This Agreement is entered into on <strong>1st January 2025</strong> between:
         </p>
         <p className="pl-2 border-l border-slate-200 italic font-sans text-[8px]">
-          <strong>LANDLORD:</strong> CHIJMES INVESTMENT PTE. LTD.<br />
-          <strong>TENANT:</strong> LIM & TAN ENTERTAINMENT GROUP PTE. LTD.
+          <strong>LANDLORD:</strong> IOI MALL KULAI SDN. BHD.<br />
+          <strong>TENANT:</strong> LIM & TAN ENTERTAINMENT GROUP SDN. BHD.
         </p>
         <p>
           <strong>WHEREAS:</strong> The Landlord is the legal owner of the premises located at:
           <span className="block font-sans font-bold text-slate-800 text-[8px] mt-1 pl-2 border-l border-primary/20">
-            30 VICTORIA STREET, #01-15, SINGAPORE 187996
+            LOT 123, JALAN IOI 4, BANDAR PUTRA, 81000 KULAI, JOHOR
           </span>
         </p>
         <p>
