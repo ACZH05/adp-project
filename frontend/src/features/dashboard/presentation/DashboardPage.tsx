@@ -77,10 +77,18 @@ export const DashboardPage: React.FC = () => {
               </div>
               <p className="text-sm text-text-muted mt-1">
                 AI scanner has resolved your business info but flagged one
-                low-confidence document. Officer review will commence shortly.
+                low-confidence document. Click resolve below to correct fields and re-upload.
               </p>
               <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden mt-3">
                 <div className="bg-warning h-full" style={{ width: "45%" }} />
+              </div>
+              <div className="mt-3 flex justify-end">
+                <Button
+                  onClick={() => router.push('/applicant/applications/APP-2026-002/resubmit')}
+                  className="bg-warning text-white text-xs px-4 py-2 hover:bg-opacity-95"
+                >
+                  Resolve Issues
+                </Button>
               </div>
             </div>
           </div>

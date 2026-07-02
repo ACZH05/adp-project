@@ -240,6 +240,13 @@ export const ApplicationsScreen: React.FC = () => {
                       >
                         Resume Application
                       </Button>
+                    ) : app.status === 'Flagged' ? (
+                      <Button
+                        onClick={() => router.push(`/applicant/applications/${app.id}/resubmit`)}
+                        className="w-full lg:w-auto text-xs py-2 px-4 bg-error text-white hover:bg-error/90 border-none"
+                      >
+                        Resolve Issues
+                      </Button>
                     ) : (
                       <Button
                         onClick={() => router.push(APPLICANT_ROUTES.dashboard)}

@@ -277,6 +277,18 @@ const mockApplicationDetails: Record<string, ApplicationDetail> = {
   }
 };
 
+export const updateMockApplicationDetails = (id: string, updates: Partial<ApplicationDetail>) => {
+  if (mockApplicationDetails[id]) {
+    mockApplicationDetails[id] = {
+      ...mockApplicationDetails[id],
+      ...updates,
+    };
+  } else {
+    // If it doesn't exist, create it as a baseline
+    mockApplicationDetails[id] = updates as ApplicationDetail;
+  }
+};
+
 // Generates a fallback application detail if not pre-defined
 export const getApplicationDetails = (app: Application): ApplicationDetail => {
   const existing = mockApplicationDetails[app.id];
