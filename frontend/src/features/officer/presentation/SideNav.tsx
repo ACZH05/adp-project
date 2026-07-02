@@ -125,7 +125,7 @@ export const SideNav: React.FC<SideNavProps> = ({ activePath = '/officer/queue' 
             </div>
             <div>
               <h2 className="font-bold text-sm tracking-tight text-white leading-none">ADP Portal</h2>
-              <span className="text-[10px] text-on-primary-container font-semibold tracking-wider uppercase mt-1 block">GovTech Agency</span>
+              <span className="text-[10px] text-on-primary-container font-semibold tracking-wider uppercase mt-1 block">Pejabat Daerah Kulai</span>
             </div>
           </div>
 

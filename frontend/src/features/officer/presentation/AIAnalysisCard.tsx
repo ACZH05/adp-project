@@ -129,7 +129,7 @@ export const AIAnalysisCard: React.FC<AIAnalysisCardProps> = ({ application }) =
               Overall Verification Rating: <span className={`font-bold ${colors.text}`}>{aiConfidence >= 80 ? 'High' : aiConfidence >= 50 ? 'Medium' : 'Low'}</span>
             </h3>
             <p className="text-xs text-text-muted mt-1 font-medium leading-relaxed">
-              Based on {aiFindings.length} automated check discrepancies found. Documents cross-referenced against ACRA and National Registry databases.
+              Based on {aiFindings.length} automated check discrepancies found. Documents cross-referenced against SSM and National Registration databases.
             </p>
             <div className="flex justify-center md:justify-start gap-2 mt-3">
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${colors.text} ${colors.bg} ${colors.border}`}>
