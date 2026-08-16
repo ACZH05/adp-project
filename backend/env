@@ -1,0 +1,10 @@
+DATABASE_URL=postgresql://postgres.xqwbidzdglulafypvnjy:teamdnf20252026@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true
+PORT=8081
+
+SUPABASE_URL="https://xqwbidzdglulafypvnjy.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="sb_secret_rPRNjHtQq8lj-69ZBizZKA_jg5pvvVq"
+SUPABASE_STORAGE_BUCKET="application-documents"
+SUPABASE_SIGNED_URL_EXPIRES_SECONDS=3600
+
+AI_ENGINE_URL=http://127.0.0.1
+AI_ENGINE_PORT=8000
