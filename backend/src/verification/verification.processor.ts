@@ -52,6 +52,9 @@ export class VerificationConsumer extends WorkerHost {
     }
 
     const result = (await response.json()) as VerificationResultType;
+    if (result?.report?.generated_at) {
+      result.report.generated_at = new Date(result.report.generated_at);
+    }
     return result;
   }
 

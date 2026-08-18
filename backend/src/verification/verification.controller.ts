@@ -11,7 +11,7 @@ import { VerificationService } from './verification.service';
 @ApiTags('verification')
 @Controller('verification')
 export class VerificationController {
-  constructor(private readonly verificationService: VerificationService) {}
+  constructor(private readonly verificationService: VerificationService) { }
 
   @Post('enqueue')
   @ApiOperation({ summary: 'Queue an application verification job' })

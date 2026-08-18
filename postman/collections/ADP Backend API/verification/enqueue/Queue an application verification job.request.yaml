@@ -1,0 +1,63 @@
+$kind: http-request
+url: "{{baseUrl}}/verification/enqueue"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "verification_job_id": "string",
+      "application_id": "string",
+      "application_version_id": "string",
+      "applicant_user_id": "string",
+      "form_data": {
+        "fullName": "string",
+        "icPassport": "string",
+        "dob": "1987-11-02",
+        "email": "string",
+        "contactNumber": "string",
+        "residentialAddress": "string",
+        "businessName": "string",
+        "position": "string",
+        "businessPhone": "string",
+        "regDate": "1955-03-24T13:02:53.684Z",
+        "expiryDate": "1953-05-09T03:01:06.990Z",
+        "regNumber": "string",
+        "businessAddress": "string",
+        "premiseAddress": "string",
+        "postcode": 6268.576834674255,
+        "cityDistrict": "string",
+        "premiseType": "Shopping Mall Unit",
+        "floorLevel": "string",
+        "primaryType": "Exhibition & Public Show",
+        "quantityCapacity": 8358.671282694073,
+        "quantityUnit": "Rooms/Booths",
+        "requestedDuration": 4956.170189586577,
+        "operatingHoursStart": 9607.445198360789,
+        "operatingHoursEnd": 1319.223174638635,
+        "signatoryName": "string",
+        "signatoryIc": "string",
+        "companyName": "string",
+        "acceptedDeclaration": false
+      },
+      "document_refs": [
+        {
+          "application_document_id": "string",
+          "document_type": "floor_plan",
+          "storage_path": "string",
+          "file_name": "string",
+          "file_type": "string"
+        },
+        {
+          "application_document_id": "string",
+          "document_type": "business_registration_copy",
+          "storage_path": "string",
+          "file_name": "string",
+          "file_type": "string"
+        }
+      ]
+    }
+settings: {}
+examples: ./.resources/Queue an application verification job.resources/examples
+order: 1000
