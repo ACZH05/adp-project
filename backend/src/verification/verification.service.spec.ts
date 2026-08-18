@@ -6,7 +6,13 @@ describe('VerificationService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [VerificationService],
+      providers: [
+        VerificationService,
+        {
+          provide: 'BullQueue_verification',
+          useValue: { add: jest.fn() },
+        },
+      ],
     }).compile();
 
     service = module.get<VerificationService>(VerificationService);

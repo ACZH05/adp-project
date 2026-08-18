@@ -8,7 +8,13 @@ describe('VerificationController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [VerificationController],
-      providers: [VerificationService],
+      providers: [
+        VerificationService,
+        {
+          provide: 'BullQueue_verification',
+          useValue: { add: jest.fn() },
+        },
+      ],
     }).compile();
 
     controller = module.get<VerificationController>(VerificationController);

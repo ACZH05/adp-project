@@ -1,6 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SupabaseService } from './supabase.service';
 
+jest.mock('../../supabase/supabase', () => ({
+  supabase: {
+    storage: {
+      from: jest.fn().mockReturnThis(),
+      upload: jest.fn().mockResolvedValue({ data: {}, error: null }),
+      createSignedUrls: jest.fn().mockResolvedValue({ data: [], error: null }),
+    },
+  },
+}));
+
 describe('SupabaseService', () => {
   let service: SupabaseService;
 

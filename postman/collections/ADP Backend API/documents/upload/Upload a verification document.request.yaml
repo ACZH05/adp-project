@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/documents/upload"
+method: POST
+headers:
+  Content-Type: multipart/form-data
+body:
+  type: formdata
+  content:
+    - type: text
+      key: applicationVersionId
+      value: string
+      description: The version ID of the application
+    - type: text
+      key: documentType
+      value: tenancy_agreement
+      description: The type of document being uploaded
+    - type: file
+      key: file
+      src: []
+      description: The file to upload
+settings: {}
+examples: ./.resources/Upload a verification document.resources/examples
+order: 1000
