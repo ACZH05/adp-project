@@ -1,6 +1,8 @@
 import { REQUIRED_DOCUMENT_TYPES } from '../data/wizardConstants';
 
 export interface WizardFormData {
+  applicationId?: string;
+  applicationVersionId?: string;
   fullName: string;
   icPassport: string;
   dob: string;

@@ -28,6 +28,8 @@ interface WizardContextType {
 }
 
 const initialFormData: WizardFormData = {
+  applicationId: '',
+  applicationVersionId: '',
   fullName: '',
   icPassport: '',
   dob: '',
@@ -196,31 +198,95 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const handleSaveDraft = () => {
-    const draftPayload = {
-      data: formData,
-      step: currentStep,
-      completed: completedSteps,
-      docs: documents,
-    };
-    localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
-    setSaveDraftMessage('Application draft saved successfully.');
-    setTimeout(() => {
-      setSaveDraftMessage(null);
-    }, 4000);
+  const handleSaveDraft = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+      const response = await fetch(`${apiUrl}/applications/draft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          applicationId: formData.applicationId || undefined,
+          applicationVersionId: formData.applicationVersionId || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save draft to database');
+      }
+
+      const result = await response.json();
+      
+      const updatedFormData = {
+        ...formData,
+        applicationId: result.applicationId,
+        applicationVersionId: result.applicationVersionId,
+      };
+
+      setFormData(updatedFormData);
+
+      const draftPayload = {
+        data: updatedFormData,
+        step: currentStep,
+        completed: completedSteps,
+        docs: documents,
+      };
+      localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
+      setSaveDraftMessage('Application draft saved successfully.');
+      setTimeout(() => {
+        setSaveDraftMessage(null);
+      }, 4000);
+    } catch (e) {
+      console.error('Error saving draft:', e);
+      setSaveDraftMessage('Failed to save draft. Local backup stored.');
+      localStorage.setItem('adp_wizard_draft', JSON.stringify({
+        data: formData,
+        step: currentStep,
+        completed: completedSteps,
+        docs: documents,
+      }));
+      setTimeout(() => {
+        setSaveDraftMessage(null);
+      }, 4000);
+    }
   };
 
-  const handleSaveAndExit = () => {
-    handleSaveDraft();
+  const handleSaveAndExit = async () => {
+    await handleSaveDraft();
     router.push(APPLICANT_ROUTES.dashboard);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateStep(6)) {
-      setReferenceId(`ENT-${Math.floor(100000 + Math.random() * 900000)}`);
-      setIsSubmitted(true);
-      localStorage.removeItem('adp_wizard_draft');
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+        const response = await fetch(`${apiUrl}/applications/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            applicationId: formData.applicationId || undefined,
+            applicationVersionId: formData.applicationVersionId || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit application to database');
+        }
+
+        const result = await response.json();
+        setReferenceId(result.applicationNo);
+        setIsSubmitted(true);
+        localStorage.removeItem('adp_wizard_draft');
+      } catch (error) {
+        console.error('Error submitting application:', error);
+        setErrors({ submit: 'Failed to submit application. Please check your connection and try again.' });
+      }
     }
   };
 

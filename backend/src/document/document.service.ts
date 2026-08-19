@@ -123,4 +123,51 @@ export class DocumentService {
         throw new BadRequestException(`Unsupported document type: ${documentType}`);
     }
   }
+
+  async getDocumentMetadata(id: string) {
+    const doc = await this.prisma.applicationDocument.findUnique({
+      where: { id },
+    });
+    if (!doc || doc.uploadStatus === 'removed') {
+      throw new NotFoundException(`Document with ID "${id}" not found`);
+    }
+    return doc;
+  }
+
+  async getDocumentDownloadUrl(id: string) {
+    const doc = await this.getDocumentMetadata(id);
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? 'application-documents';
+    
+    const data = await this.supabaseService.createSingleSignedUrl(bucket, doc.storagePath);
+    const signedUrl = data?.signedUrl;
+    if (!signedUrl) {
+      throw new NotFoundException(`Could not generate signed download URL for document ID "${id}"`);
+    }
+    return signedUrl;
+  }
+
+  async listDocumentsByVersion(versionId: string) {
+    return await this.prisma.applicationDocument.findMany({
+      where: {
+        applicationVersionId: versionId,
+        uploadStatus: 'uploaded',
+      },
+    });
+  }
+
+  async deleteDocument(id: string) {
+    const doc = await this.getDocumentMetadata(id);
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET ?? 'application-documents';
+
+    // 1. Delete file from Supabase storage
+    await this.supabaseService.deleteFile(bucket, doc.storagePath);
+
+    // 2. Mark as removed in the database
+    return await this.prisma.applicationDocument.update({
+      where: { id },
+      data: {
+        uploadStatus: 'removed',
+      },
+    });
+  }
 }

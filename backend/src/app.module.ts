@@ -5,6 +5,7 @@ import { VerificationModule } from './verification/verification.module';
 import { BullModule } from '@nestjs/bullmq';
 import { SupabaseModule } from './supabase/supabase.module';
 import { DocumentModule } from './document/document.module';
+import { ApplicationModule } from './application/application.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { DocumentModule } from './document/document.module';
     VerificationModule,
     SupabaseModule,
     DocumentModule,
+    ApplicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
