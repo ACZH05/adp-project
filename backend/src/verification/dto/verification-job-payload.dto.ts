@@ -68,11 +68,11 @@ class VerificationFormDataDto {
   @ApiProperty()
   businessPhone!: string;
 
-  @ApiProperty({ format: 'date-time' })
-  regDate!: Date;
+  @ApiProperty({ format: 'date' })
+  regDate!: string;
 
-  @ApiProperty({ format: 'date-time' })
-  expiryDate!: Date;
+  @ApiProperty({ format: 'date' })
+  expiryDate!: string;
 
   @ApiProperty()
   regNumber!: string;

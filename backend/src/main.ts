@@ -5,6 +5,7 @@ import 'dotenv/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors();
   const config = new DocumentBuilder()
     .setTitle('ADP Backend API')
     .setDescription('Backend API for ADP application processing.')

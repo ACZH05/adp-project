@@ -17,7 +17,7 @@ interface WizardContextType {
   referenceId: string;
   setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handleFieldChange: (field: string, value: string | boolean) => void;
-  handleUploadFile: (key: string, name: string, size: string) => void;
+  handleUploadFile: (key: string, file: File) => void;
   handleDeleteFile: (key: string) => void;
   handleNext: () => void;
   handleBack: () => void;
@@ -115,14 +115,16 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const handleUploadFile = (key: string, name: string, size: string) => {
+  const handleUploadFile = async (key: string, file: File) => {
+    const sizeStr = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+
     setDocuments((prev) => ({
       ...prev,
       [key]: {
-        name,
-        size,
+        name: file.name,
+        size: sizeStr,
         status: 'uploading',
-        progress: 0,
+        progress: 10,
       },
     }));
 
@@ -134,45 +136,106 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
 
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      setDocuments((prev) => {
-        const file = prev[key];
-        if (!file) return prev;
-        return {
-          ...prev,
-          [key]: {
-            ...file,
-            progress: currentProgress,
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+      let currentVersionId = formData.applicationVersionId;
+      let currentAppId = formData.applicationId;
+
+      // If we don't have an applicationVersionId yet, save draft to generate one!
+      if (!currentVersionId) {
+        const response = await fetch(`${apiUrl}/applications/draft`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        };
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to create application draft version for upload');
+        }
+        const result = await response.json();
+        currentAppId = result.applicationId;
+        currentVersionId = result.applicationVersionId;
+
+        setFormData((prev) => ({
+          ...prev,
+          applicationId: currentAppId,
+          applicationVersionId: currentVersionId,
+        }));
+      }
+
+      // Map frontend keys to backend DocumentType
+      let docType = 'floor_plan';
+      if (key === 'identityCard') docType = 'identity_card_copy';
+      else if (key === 'tenancyAgreement') docType = 'tenancy_agreement';
+      else if (key === 'ssmProfile') docType = 'business_registration_copy';
+      else if (key === 'layoutPlan') docType = 'floor_plan';
+
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('applicationVersionId', currentVersionId!);
+      formDataUpload.append('documentType', docType);
+
+      setDocuments((prev) => ({
+        ...prev,
+        [key]: { ...prev[key]!, progress: 50 },
+      }));
+
+      const uploadResponse = await fetch(`${apiUrl}/documents/upload`, {
+        method: 'POST',
+        body: formDataUpload,
       });
 
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        const finalStatus = 'verified';
-        setDocuments((prev) => {
-          const file = prev[key];
-          if (!file) return prev;
-          return {
-            ...prev,
-            [key]: {
-              ...file,
-              status: finalStatus,
-              progress: 100,
-            },
-          };
-        });
+      if (!uploadResponse.ok) {
+        throw new Error('File upload failed on server');
       }
-    }, 100);
+
+      const uploadResult = await uploadResponse.json();
+
+      setDocuments((prev) => ({
+        ...prev,
+        [key]: {
+          name: file.name,
+          size: sizeStr,
+          status: 'verified',
+          progress: 100,
+          dbId: uploadResult.id,
+        },
+      }));
+    } catch (err) {
+      console.error('File upload error:', err);
+      setDocuments((prev) => ({
+        ...prev,
+        [key]: {
+          name: file.name,
+          size: sizeStr,
+          status: 'flagged',
+          progress: 0,
+        },
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        [key]: 'Failed to upload document to server.',
+      }));
+    }
   };
 
-  const handleDeleteFile = (key: string) => {
+  const handleDeleteFile = async (key: string) => {
+    const doc = documents[key];
     setDocuments((prev) => ({
       ...prev,
       [key]: undefined,
     }));
+    if (doc?.dbId) {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+        await fetch(`${apiUrl}/documents/${doc.dbId}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error('Failed to delete document from server:', err);
+      }
+    }
   };
 
   const validateStep = (stepNum: number): boolean => {

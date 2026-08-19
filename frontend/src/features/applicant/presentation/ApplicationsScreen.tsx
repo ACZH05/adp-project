@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/src/shared/components/Button';
 import { Card } from '@/src/shared/components/Card';
 import { StatusBadge } from '@/src/shared/components/StatusBadge';
 import { APPLICANT_ROUTES, APPLICATION_STATUS_FILTERS } from '../data/applicantConstants';
-import { getMockApplications } from '../data/applicantMockService';
 
 export const ApplicationsScreen: React.FC = () => {
   const router = useRouter();
@@ -14,12 +13,63 @@ export const ApplicationsScreen: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedAppId, setExpandedAppId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem('adp_user_email') || 'test@example.com';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+
+    fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const mapped = data.map(app => {
+            let displayStatus = 'Draft';
+            if (
+              app.status === 'submitted' ||
+              app.status === 'verification_queued' ||
+              app.status === 'verifying'
+            ) {
+              displayStatus = 'Pending';
+            } else if (app.status === 'verified') {
+              displayStatus = 'Approved';
+            } else if (app.status === 'rejected') {
+              displayStatus = 'Rejected';
+            } else if (app.status === 'flagged') {
+              displayStatus = 'Flagged';
+            }
+
+            return {
+              id: app.applicationNo || app.id,
+              dbId: app.id,
+              licenseType: app.licenseType,
+              submissionDate: app.submissionDate,
+              aiConfidence: app.aiConfidence,
+              status: displayStatus,
+              documents: app.documents,
+              formSnapshot: app.formSnapshot,
+              applicationVersionId: app.applicationVersionId,
+            };
+          });
+          setApplications(mapped);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load applications:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   const handleStartWizard = () => {
     router.push(APPLICANT_ROUTES.applyStart);
   };
 
   const processedApplications = useMemo(() => {
-    let result = [...getMockApplications()];
+    let result = [...applications];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -55,7 +105,7 @@ export const ApplicationsScreen: React.FC = () => {
     });
 
     return result;
-  }, [searchQuery, statusFilter, sortBy]);
+  }, [applications, searchQuery, statusFilter, sortBy]);
 
   const getConfidenceStyles = (score: number) => {
     if (score >= 80) return { barColor: 'bg-success', textColor: 'text-success' };
@@ -185,7 +235,11 @@ export const ApplicationsScreen: React.FC = () => {
       </Card>
 
       <div className="flex flex-col gap-4">
-        {processedApplications.length > 0 ? (
+        {loading ? (
+          <Card className="border border-border-muted p-12 bg-white text-center flex flex-col items-center justify-center gap-2">
+            <span className="text-sm font-semibold text-text-muted">Loading applications...</span>
+          </Card>
+        ) : processedApplications.length > 0 ? (
           processedApplications.map((app) => {
             const confStyle = getConfidenceStyles(app.aiConfidence);
             return (
@@ -235,7 +289,15 @@ export const ApplicationsScreen: React.FC = () => {
                   <div className="flex items-center justify-start lg:justify-end shrink-0 w-full lg:w-36">
                     {app.status === 'Draft' ? (
                       <Button
-                        onClick={() => router.push(APPLICANT_ROUTES.applyStart)}
+                        onClick={() => {
+                          const draftPayload = {
+                            applicationId: app.dbId,
+                            applicationVersionId: app.applicationVersionId,
+                            ...app.formSnapshot,
+                          };
+                          localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
+                          router.push(APPLICANT_ROUTES.applyStart);
+                        }}
                         className="w-full lg:w-auto text-xs py-2 px-4 bg-primary text-white hover:bg-primary-container"
                       >
                         Resume Application
@@ -249,14 +311,124 @@ export const ApplicationsScreen: React.FC = () => {
                       </Button>
                     ) : (
                       <Button
-                        onClick={() => router.push(APPLICANT_ROUTES.dashboard)}
+                        onClick={() => setExpandedAppId(expandedAppId === app.id ? null : app.id)}
                         className="w-full lg:w-auto text-xs py-2 px-4"
                       >
-                        View Details
+                        {expandedAppId === app.id ? 'Hide Details' : 'View Details'}
                       </Button>
                     )}
                   </div>
                 </div>
+
+                {/* Collapsible Details Area inside listing card */}
+                {expandedAppId === app.id && (
+                  <div className="border-t border-border-muted pt-5 mt-5 flex flex-col gap-6 animate-fadeIn">
+                    {/* Category 1: Applicant Info */}
+                    <div>
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Applicant Information
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Full Name</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.fullName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">IC/Passport No.</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.icPassport || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Date of Birth</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.dob || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Email Address</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.email || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Contact Number</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.contactNumber || 'N/A'}</p>
+                        </div>
+                        <div className="sm:col-span-2 md:col-span-3">
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Residential Address</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5 whitespace-pre-line">{app.formSnapshot.residentialAddress || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category 2: Business Info */}
+                    <div className="border-t border-border-muted pt-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Business Details
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Company Name</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.companyName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Business Name</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.businessName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">SSM Registration No.</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.regNumber || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Position / Designation</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.position || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Registration Date</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.regDate || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Expiry Date</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.expiryDate || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category 3: Premises & Licensing Info */}
+                    <div className="border-t border-border-muted pt-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Premises & License Parameters
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">License Type</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.licenseType}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Premises Type</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.premiseType || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Floor Level</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.floorLevel || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Capacity Quantity</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.quantityCapacity} {app.formSnapshot.quantityUnit || ''}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Operating Hours</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">
+                            {app.formSnapshot.operatingHoursStart} - {app.formSnapshot.operatingHoursEnd}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Requested License Duration</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.requestedDuration} Months</p>
+                        </div>
+                        <div className="sm:col-span-2 md:col-span-3">
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Premises Address</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5 whitespace-pre-line">{app.formSnapshot.premiseAddress || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
             );
           })

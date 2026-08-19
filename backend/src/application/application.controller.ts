@@ -1,8 +1,10 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, Query, BadRequestException } from '@nestjs/common';
 import {
   ApiBody,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { ApplicationService } from './application.service';
@@ -27,5 +29,16 @@ export class ApplicationController {
   @ApiCreatedResponse({ description: 'Application submitted and verification enqueued successfully.' })
   async submit(@Body() dto: SubmitApplicationDto) {
     return await this.applicationService.upsertApplication(dto, 'submitted');
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get applications for a logged-in user by email' })
+  @ApiQuery({ name: 'email', required: true, description: 'User email' })
+  @ApiOkResponse({ description: 'Applications returned successfully.' })
+  async getApplications(@Query('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return await this.applicationService.getApplicationsByUser(email);
   }
 }

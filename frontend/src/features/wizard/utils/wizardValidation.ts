@@ -41,13 +41,11 @@ export interface WizardFormData {
 const validateStep1 = (formData: WizardFormData, stepErrors: Record<string, string>) => {
   if (!formData.fullName.trim()) stepErrors.fullName = 'Full Name is required';
   
-  const icClean = formData.icPassport.replace(/-/g, '');
+  const icClean = formData.icPassport.replace(/-/g, '').trim();
   if (!formData.icPassport.trim()) {
     stepErrors.icPassport = 'IC / Passport number is required';
-  } else if (icClean.length === 12 && !/^\d+$/.test(icClean)) {
-    stepErrors.icPassport = 'IC should contain numbers only';
-  } else if (formData.icPassport.trim().length < 6) {
-    stepErrors.icPassport = 'Invalid passport format';
+  } else if (icClean.length < 6) {
+    stepErrors.icPassport = 'Invalid IC / Passport format';
   }
 
   if (!formData.dob) stepErrors.dob = 'Date of birth is required';
@@ -69,7 +67,15 @@ const validateStep2 = (formData: WizardFormData, stepErrors: Record<string, stri
     stepErrors.position = 'Your Position / Role should contain letters only';
   }
   if (!formData.regDate) stepErrors.regDate = 'Registration Date is required';
-  if (!formData.expiryDate) stepErrors.expiryDate = 'Expiry Date is required';
+  if (!formData.expiryDate) {
+    stepErrors.expiryDate = 'Expiry Date is required';
+  } else if (formData.regDate && formData.expiryDate) {
+    const reg = new Date(formData.regDate);
+    const exp = new Date(formData.expiryDate);
+    if (exp < reg) {
+      stepErrors.expiryDate = 'Expiry Date cannot be before Registration Date';
+    }
+  }
   if (!formData.businessPhone.trim()) {
     stepErrors.businessPhone = 'Business Phone is required';
   } else if (/[a-zA-Z]/.test(formData.businessPhone)) {

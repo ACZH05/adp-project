@@ -210,8 +210,8 @@ export class ApplicationService {
         businessName: dto.businessName,
         position: dto.position,
         businessPhone: dto.businessPhone,
-        regDate: new Date(dto.regDate),
-        expiryDate: new Date(dto.expiryDate),
+        regDate: new Date(dto.regDate).toISOString().split('T')[0] as any,
+        expiryDate: new Date(dto.expiryDate).toISOString().split('T')[0] as any,
         regNumber: dto.regNumber,
         businessAddress: dto.businessAddress,
         premiseAddress: dto.premiseAddress,
@@ -266,5 +266,50 @@ export class ApplicationService {
       applicationNo: appNo,
       status: status === 'submitted' ? 'submitted' : 'draft',
     };
+  }
+
+  async getApplicationsByUser(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (!user) {
+      return [];
+    }
+
+    const applications = await this.prisma.application.findMany({
+      where: { applicantUserId: user.id },
+      include: {
+        versions: {
+          orderBy: { versionNumber: 'desc' },
+          take: 1,
+          include: {
+            documents: {
+              where: { uploadStatus: 'uploaded' },
+            },
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return applications.map((app) => {
+      const latestVersion = app.versions[0];
+      const formSnapshot = (latestVersion?.formSnapshot as any) || {};
+      
+      return {
+        id: app.id,
+        applicationNo: app.applicationNo,
+        status: app.status, // draft, submitted, etc.
+        licenseType: formSnapshot.primaryType || 'Food Establishment License',
+        submissionDate: app.updatedAt,
+        aiConfidence: app.status === 'draft' ? 0 : 92, // mock confidence score
+        documents: {
+          approved: latestVersion?.documents?.length || 0,
+          total: 4,
+        },
+        formSnapshot,
+        applicationVersionId: latestVersion?.id,
+      };
+    });
   }
 }

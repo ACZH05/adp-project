@@ -6,12 +6,13 @@ export interface UploadedFile {
   size: string;
   status: 'uploading' | 'verified' | 'flagged';
   progress: number;
+  dbId?: string;
 }
 
 interface Step5Props {
   documents: Record<string, UploadedFile | undefined>;
   errors: Record<string, string>;
-  onUploadFile: (key: string, name: string, size: string) => void;
+  onUploadFile: (key: string, file: File) => void;
   onDeleteFile: (key: string) => void;
 }
 
@@ -32,8 +33,7 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-      onUploadFile(key, file.name, sizeStr);
+      onUploadFile(key, file);
     }
   };
 
@@ -41,8 +41,7 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-      onUploadFile(key, file.name, sizeStr);
+      onUploadFile(key, file);
     }
   };
 
