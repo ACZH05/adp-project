@@ -37,10 +37,10 @@ export const SkeletonRows = () => (
   <>
     {Array.from({ length: 5 }).map((_, index) => (
       <tr key={`skeleton-${index}`} className="animate-pulse">
+        <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-28"></div></td>
         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-24"></div></td>
         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-32"></div></td>
         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-20"></div></td>
-        <td className="px-6 py-4"><div className="h-5 bg-slate-200 rounded-full w-16"></div></td>
         <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded w-16"></div></td>
         <td className="px-6 py-4"><div className="h-8 bg-slate-200 rounded w-20"></div></td>
       </tr>

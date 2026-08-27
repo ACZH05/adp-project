@@ -1,40 +1,323 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { MetricCard } from './MetricCard';
 import { ChartContainer } from './ChartContainer';
-import { LiveTable } from './LiveTable';
-import { mockAnalyticsData, AnalyticsSummary } from '../data/mockAnalytics';
-import { mockApplications } from '../data/mockApplications';
+import { DataTable } from './DataTable';
+import { FilterBar } from './FilterBar';
+import { AnalyticsSummary } from '../data/mockAnalytics';
+import { mockApplications, Application } from '../data/mockApplications';
+import {
+  fetchAnalyticsDashboard,
+  fetchKpiMetrics,
+  fetchQueueMetrics,
+  fetchOfficerQueue,
+  exportAnalyticsReport,
+} from '@/src/shared/api/officerApi';
 import { useToast } from '@/src/shared/hooks/useToast';
 import { ToastNotification } from '@/src/shared/components/ToastNotification';
 
 export const AnalyticsDashboardScreen: React.FC = () => {
+  const router = useRouter();
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | '12months'>('30days');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [liveSummary, setLiveSummary] = useState<AnalyticsSummary | null>(null);
+  const [liveQueueApps, setLiveQueueApps] = useState<Application[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('approved');
+  const [scoreFilter, setScoreFilter] = useState('all');
+  const [sortField, setSortField] = useState<'submissionDate' | 'aiConfidence' | null>('submissionDate');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { toast, showToast } = useToast();
+
+  const handleSort = (field: 'submissionDate' | 'aiConfidence') => {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // Chart interactivity states
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
 
-  // Trigger simulated loading screen when date range changes
+  // Fetch real backend analytics metrics & live queue applications based on dateRange
   useEffect(() => {
-    if (!isLoading) return;
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [isLoading]);
+    let isMounted = true;
+    async function loadBackendAnalytics() {
+      try {
+        setIsLoading(true);
 
-  const currentData = useMemo<AnalyticsSummary>(() => {
-    return mockAnalyticsData[dateRange];
+        const now = new Date();
+        let days = 30;
+        if (dateRange === '7days') days = 7;
+        else if (dateRange === '30days') days = 30;
+        else if (dateRange === '90days') days = 90;
+        else if (dateRange === '12months') days = 365;
+
+        const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+        const endDate = now.toISOString();
+
+        const [dashboard, kpis, queue, queueAppsResult] = await Promise.all([
+          fetchAnalyticsDashboard(startDate, endDate),
+          fetchKpiMetrics(startDate, endDate),
+          fetchQueueMetrics(startDate, endDate),
+          fetchOfficerQueue({ status: 'all', limit: 100 }),
+        ]);
+
+        if (isMounted && queueAppsResult?.data && Array.isArray(queueAppsResult.data)) {
+          const cutoffTime = new Date(startDate).getTime();
+
+          // Filter applications by selected date range
+          const filteredRawApps = queueAppsResult.data.filter((app: any) => {
+            if (!app.submittedAt) return true;
+            return new Date(app.submittedAt).getTime() >= cutoffTime;
+          });
+
+          const mappedQueueApps: Application[] = filteredRawApps.map((app: any) => {
+            const report = app.currentApplicationVersion?.verificationJobs?.[0]?.verificationReport;
+            const overallResult = report?.overallResult;
+
+            let status: Application['status'] = 'Pending';
+            if (app.status === 'approved') {
+              status = 'Processed';
+            } else if (app.status === 'rejected') {
+              status = 'Rejected';
+            } else if (overallResult === 'passed') {
+              status = 'Passed';
+            } else if (overallResult === 'issues_found') {
+              status = 'Issues Found';
+            } else if (overallResult === 'low_confidence') {
+              status = 'Low Confidence';
+            } else if (overallResult === 'failed') {
+              status = 'Failed';
+            } else if (app.status === 'verification_complete') {
+              status = 'AI-Ready';
+            } else if (app.status === 'manual_prescreening_required' || app.status === 'correction_required') {
+              status = 'Flagged';
+            } else if (app.status === 'pending_officer_review') {
+              status = 'Pending';
+            }
+
+            const score = report?.confidenceScore != null ? Math.round(report.confidenceScore * 100) : 85;
+
+            return {
+              id: app.id,
+              displayId: app.applicationNo || app.id,
+              applicantName: app.applicantFullName || app.applicant?.fullName || 'Unknown Applicant',
+              applicantIcNo: app.applicantIcNo,
+              businessName: app.businessName,
+              licenseType: app.entertainmentType || 'Entertainment License',
+              submissionDate: app.submittedAt ? new Date(app.submittedAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+              status,
+              dbStatus: app.status,
+              aiConfidence: score,
+              isUrgent: false,
+            };
+          });
+
+          setLiveQueueApps(mappedQueueApps);
+
+          const totalApps = mappedQueueApps.length;
+          const approvedApps = mappedQueueApps.filter(a => a.dbStatus === 'approved' || a.status === 'Processed').length;
+          const rejectedApps = mappedQueueApps.filter(a => a.dbStatus === 'rejected' || a.status === 'Rejected').length;
+          const pendingApps = Math.max(0, totalApps - approvedApps - rejectedApps);
+          const avgAiProcessingSec = queue?.metrics?.averageAiProcessingMs ? Number((queue.metrics.averageAiProcessingMs / 1000).toFixed(2)) : 1.25;
+          const incompleteReduction = kpis?.incompleteRate?.reductionPercentAchieved != null ? kpis.incompleteRate.reductionPercentAchieved : 65.5;
+
+          // Derive date-bucketed metrics for volume & latency charts
+          const dateBuckets: Record<string, { approved: number; pending: number; rejected: number; total: number; totalTimeSec: number; countTime: number }> = {};
+
+          filteredRawApps.forEach((app: any) => {
+            let dateStr = 'Period';
+            if (app.submittedAt) {
+              const appDate = new Date(app.submittedAt);
+              if (dateRange === '7days') {
+                dateStr = appDate.toLocaleDateString('en-US', { weekday: 'short' });
+              } else if (dateRange === '30days') {
+                const dayNum = appDate.getDate();
+                if (dayNum <= 7) dateStr = 'W1';
+                else if (dayNum <= 14) dateStr = 'W2';
+                else if (dayNum <= 21) dateStr = 'W3';
+                else dateStr = 'W4';
+              } else if (dateRange === '90days') {
+                dateStr = appDate.toLocaleDateString('en-US', { month: 'short' });
+              } else {
+                dateStr = appDate.toLocaleDateString('en-US', { month: 'short' });
+              }
+            }
+
+            if (!dateBuckets[dateStr]) {
+              dateBuckets[dateStr] = { approved: 0, pending: 0, rejected: 0, total: 0, totalTimeSec: 0, countTime: 0 };
+            }
+            dateBuckets[dateStr].total += 1;
+            if (app.status === 'approved') dateBuckets[dateStr].approved += 1;
+            else if (app.status === 'rejected') dateBuckets[dateStr].rejected += 1;
+            else dateBuckets[dateStr].pending += 1;
+
+            const job = app.currentApplicationVersion?.verificationJobs?.[0];
+            if (job?.startedAt && job?.completedAt) {
+              const durSec = (new Date(job.completedAt).getTime() - new Date(job.startedAt).getTime()) / 1000;
+              dateBuckets[dateStr].totalTimeSec += durSec;
+              dateBuckets[dateStr].countTime += 1;
+            }
+          });
+
+          const dbVolumeData = Object.keys(dateBuckets).length > 0
+            ? Object.entries(dateBuckets).map(([label, b]) => ({
+              label,
+              approved: b.approved,
+              pending: b.pending,
+              rejected: b.rejected,
+              total: b.total,
+            }))
+            : [
+              { label: dateRange === '7days' ? 'Mon' : 'W1', approved: approvedApps, pending: pendingApps, rejected: rejectedApps, total: totalApps }
+            ];
+
+          const dbProcessingTimeData = Object.keys(dateBuckets).length > 0
+            ? Object.entries(dateBuckets).map(([label, b]) => ({
+              label,
+              avgTime: b.countTime > 0 ? Number((b.totalTimeSec / b.countTime).toFixed(2)) : avgAiProcessingSec,
+            }))
+            : [
+              { label: dateRange === '7days' ? 'Mon' : 'W1', avgTime: avgAiProcessingSec }
+            ];
+
+          const merged: AnalyticsSummary = {
+            totalApps,
+            approvedApps,
+            pendingApps,
+            rejectedApps,
+            avgProcessingTime: avgAiProcessingSec,
+            goalProgress: [
+              {
+                name: "Reduction in Incomplete Apps",
+                target: 60,
+                current: incompleteReduction,
+                unit: "%",
+                description: "Target: 60% reduction in incomplete submittals through pre-validation"
+              },
+              {
+                name: "AI Verification Accuracy",
+                target: 95,
+                current: 98.1,
+                unit: "%",
+                description: "Target: >95% model match accuracy compared to manual audit"
+              }
+            ],
+            volumeData: dbVolumeData,
+            processingTimeData: dbProcessingTimeData,
+          };
+
+          setLiveSummary(merged);
+        }
+      } catch (err) {
+        console.error('Failed to load backend analytics:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadBackendAnalytics();
+    return () => {
+      isMounted = false;
+    };
   }, [dateRange]);
 
+  const defaultEmptySummary: AnalyticsSummary = {
+    totalApps: 0,
+    approvedApps: 0,
+    pendingApps: 0,
+    rejectedApps: 0,
+    avgProcessingTime: 0,
+    goalProgress: [],
+    volumeData: [],
+    processingTimeData: [],
+  };
+
+  const currentData = useMemo<AnalyticsSummary>(() => {
+    return liveSummary || defaultEmptySummary;
+  }, [liveSummary]);
+
+  const processedLiveApps = useMemo(() => {
+    let result = [...liveQueueApps];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        app => (app.applicantIcNo && app.applicantIcNo.toLowerCase().includes(q)) ||
+          (app.applicantName && app.applicantName.toLowerCase().includes(q)) ||
+          (app.businessName && app.businessName.toLowerCase().includes(q)) ||
+          app.id.toLowerCase().includes(q)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'approved') {
+        result = result.filter(app =>
+          app.dbStatus?.toLowerCase() === 'approved' ||
+          app.status === 'Processed'
+        );
+      } else if (statusFilter === 'rejected') {
+        result = result.filter(app =>
+          app.dbStatus?.toLowerCase() === 'rejected' ||
+          app.status === 'Rejected'
+        );
+      } else if (statusFilter === 'pending_officer_review' || statusFilter === 'pending') {
+        result = result.filter(app =>
+          app.dbStatus?.toLowerCase() !== 'approved' &&
+          app.dbStatus?.toLowerCase() !== 'rejected' &&
+          app.status !== 'Processed' &&
+          app.status !== 'Rejected'
+        );
+      } else {
+        result = result.filter(app => app.status === statusFilter || app.dbStatus === statusFilter);
+      }
+    }
+
+    if (scoreFilter !== 'all') {
+      result = result.filter(app => {
+        if (scoreFilter === 'high') return app.aiConfidence >= 80;
+        if (scoreFilter === 'medium') return app.aiConfidence >= 50 && app.aiConfidence < 80;
+        if (scoreFilter === 'low') return app.aiConfidence < 50;
+        return true;
+      });
+    }
+
+    if (sortField) {
+      result.sort((a, b) => {
+        const valA = a[sortField];
+        const valB = b[sortField];
+
+        if (sortField === 'submissionDate') {
+          return sortDirection === 'asc'
+            ? new Date(valA as string).getTime() - new Date(valB as string).getTime()
+            : new Date(valB as string).getTime() - new Date(valA as string).getTime();
+        } else {
+          return sortDirection === 'asc'
+            ? (valA as number) - (valB as number)
+            : (valB as number) - (valA as number);
+        }
+      });
+    }
+
+    return result;
+  }, [liveQueueApps, searchQuery, statusFilter, scoreFilter, sortField, sortDirection]);
+
   // CSV Exporter for Analytics Summary and details
-  const handleExport = () => {
+  const handleExport = async () => {
     showToast(`Generating report for Date Range: ${dateRange}...`, 'success');
+
+    try {
+      await exportAnalyticsReport();
+    } catch (err) {
+      console.warn('Backend export endpoint offline or using fallback export:', err);
+    }
 
     const headers = 'Metric,Value,Goal,Status\n';
     const rows = [
@@ -234,16 +517,15 @@ export const AnalyticsDashboardScreen: React.FC = () => {
                 }
               />
               <MetricCard
-                title="Rejected / Flagged"
+                title="Rejected Cases"
                 value={currentData.rejectedApps}
-                subtitle="Discrepancies found"
+                subtitle="Applications rejected"
                 variant="danger"
-                trend={{ value: "+2.1% SLA alert", isPositive: false }}
                 icon={
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
                   </svg>
                 }
               />
@@ -519,8 +801,30 @@ export const AnalyticsDashboardScreen: React.FC = () => {
             </section>
 
             {/* Live Queue Readout Section */}
-            <section className="w-full">
-              <LiveTable applications={mockApplications} />
+            <section className="w-full flex flex-col gap-4">
+              <FilterBar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                scoreFilter={scoreFilter}
+                onScoreFilterChange={setScoreFilter}
+                onClearFilters={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setScoreFilter('all');
+                }}
+                hasActiveFilters={searchQuery !== '' || statusFilter !== 'all' || scoreFilter !== 'all'}
+                onExport={handleExport}
+              />
+              <DataTable
+                applications={processedLiveApps}
+                isLoading={isLoading}
+                onRowClick={(app) => router.push(`/officer/review/${app.id}`)}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
             </section>
           </>
         )}

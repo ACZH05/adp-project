@@ -10,13 +10,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
   const s = status.toLowerCase();
 
-  if (s === 'approved' || s === 'ai-ready' || s === 'verified') {
+  if (s === 'approved' || s === 'ai-ready' || s === 'verified' || s === 'passed') {
     bgColor = 'bg-success/10';
     textColor = 'text-success';
-  } else if (s === 'flagged') {
+  } else if (s === 'flagged' || s === 'failed' || s === 'issues found' || s === 'issues_found') {
     bgColor = 'bg-error/10';
     textColor = 'text-error';
-  } else if (s === 'conflicted' || s === 'warning' || s === 'warning-amber') {
+  } else if (s === 'conflicted' || s === 'warning' || s === 'low confidence' || s === 'low_confidence') {
     bgColor = 'bg-warning/10';
     textColor = 'text-warning';
   } else if (s === 'processed' || s === 'completed') {
