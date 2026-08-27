@@ -67,7 +67,8 @@ const validateStep2 = (formData: WizardFormData, stepErrors: Record<string, stri
     stepErrors.position = 'Your Position / Role should contain letters only';
   }
   if (!formData.regDate) stepErrors.regDate = 'Registration Date is required';
-  if (!formData.expiryDate) {
+  const isSdnBhd = /sdn\.?\s*bhd\.?/i.test(formData.businessName || '');
+  if (!isSdnBhd && !formData.expiryDate) {
     stepErrors.expiryDate = 'Expiry Date is required';
   } else if (formData.regDate && formData.expiryDate) {
     const reg = new Date(formData.regDate);

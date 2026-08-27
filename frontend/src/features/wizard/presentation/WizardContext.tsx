@@ -165,11 +165,11 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Map frontend keys to backend DocumentType
-      let docType = 'floor_plan';
-      if (key === 'identityCard') docType = 'identity_card_copy';
+      let docType = '';
+      if (key === 'passportPhoto') docType = 'applicant_passport_photo';
+      else if (key === 'icCopy') docType = 'identity_card_copy';
+      else if (key === 'businessReg') docType = 'business_registration_copy';
       else if (key === 'tenancyAgreement') docType = 'tenancy_agreement';
-      else if (key === 'ssmProfile') docType = 'business_registration_copy';
-      else if (key === 'layoutPlan') docType = 'floor_plan';
 
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);

@@ -18,19 +18,15 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
   const router = useRouter();
   const { toast, showToast } = useToast();
 
-  // Find the base application
-  const appIndex = mockApplicantApplications.findIndex(a => a.id === id);
-  const baseApp = mockApplicantApplications[appIndex];
+  const [baseApp, setBaseApp] = useState<any | null>(null);
+  const [appDetails, setAppDetails] = useState<any | null>(null);
+  const [appNotFound, setAppNotFound] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // If application is not found or not Flagged, display message/redirect
-  const [appNotFound, setAppNotFound] = useState(!baseApp);
-
-  // Load detailed application details
-  const appDetails = baseApp ? getApplicationDetails(baseApp as any) : null;
-
-  // Form States (with defaults from the flagged application details)
-  const [businessName, setBusinessName] = useState(appDetails?.businessName || '');
-  const [expiryDate, setExpiryDate] = useState(appDetails?.businessExpiryDate || '');
+  // Form States
+  const [businessName, setBusinessName] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [isRealDbApp, setIsRealDbApp] = useState(false);
 
   // File Upload states (names/size of the uploaded files)
   const [ssmFile, setSsmFile] = useState<{ name: string; size: string } | null>(null);
@@ -45,16 +41,81 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    // 1. First check if it is in mock data
+    const mockApp = mockApplicantApplications.find(a => a.id === id);
+    if (mockApp) {
+      setBaseApp(mockApp);
+      const details = getApplicationDetails(mockApp as any);
+      setAppDetails(details);
+      setBusinessName(details?.businessName || '');
+      setExpiryDate(details?.businessExpiryDate || '');
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fetch from real database
+    const email = localStorage.getItem('adp_user_email') || 'test@example.com';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+
+    fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const app = data.find(a => a.applicationNo === id || a.id === id);
+          if (app) {
+            setIsRealDbApp(true);
+            setBaseApp({
+              ...app,
+              status: app.status === 'correction_required' ? 'Flagged' : app.status,
+            });
+            setAppDetails({
+              businessName: app.formSnapshot?.businessName || '',
+              businessExpiryDate: app.formSnapshot?.expiryDate || '',
+              documents: app.docList || [],
+              auditLogs: [],
+            });
+            setBusinessName(app.formSnapshot?.businessName || '');
+            setExpiryDate(app.formSnapshot?.expiryDate || '');
+            
+            // Set uploaded files if they exist in docList
+            const ssmDoc = app.docList?.find((d: any) => d.documentType === 'business_registration_copy');
+            if (ssmDoc) {
+              setSsmFile({ name: ssmDoc.fileName, size: (ssmDoc.fileSize / (1024 * 1024)).toFixed(1) + ' MB' });
+              setSsmVerified(true);
+            }
+            const tenancyDoc = app.docList?.find((d: any) => d.documentType === 'tenancy_agreement');
+            if (tenancyDoc) {
+              setTenancyFile({ name: tenancyDoc.fileName, size: (tenancyDoc.fileSize / (1024 * 1024)).toFixed(1) + ' MB' });
+              setTenancyVerified(true);
+            }
+          } else {
+            setAppNotFound(true);
+          }
+        } else {
+          setAppNotFound(true);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load resubmit application:', err);
+        setAppNotFound(true);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [id]);
+
+  const isSdnBhd = /sdn\.?\s*bhd\.?/i.test(businessName || '');
   // Detect checks automatically based on input values and uploads
   const nameIssueResolved = businessName.toLowerCase() === 'kee food ventures sdn. bhd.' || businessName.toLowerCase() === 'kee food services sdn bhd' || (businessName.trim() !== '' && businessName !== appDetails?.businessName);
-  const expiryIssueResolved = expiryDate !== '' && new Date(expiryDate) > new Date('2026-07-02');
+  const expiryIssueResolved = isSdnBhd || (expiryDate !== '' && new Date(expiryDate) > new Date('2026-07-02'));
   const ssmUploaded = ssmVerified;
   const tenancyUploaded = tenancyVerified;
 
   // Check if everything is resolved
   const isFormValid = nameIssueResolved && expiryIssueResolved && ssmUploaded && tenancyUploaded;
 
-  const handleSsmUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSsmUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
@@ -62,15 +123,40 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
       setSsmVerifying(true);
       setSsmVerified(false);
 
-      setTimeout(() => {
-        setSsmVerifying(false);
-        setSsmVerified(true);
-        showToast('SSM Document verified by AI. Status: Active (98% confidence).', 'success');
-      }, 1000);
+      if (isRealDbApp && baseApp?.applicationVersionId) {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+          const formDataUpload = new FormData();
+          formDataUpload.append('file', file);
+          formDataUpload.append('applicationVersionId', baseApp.applicationVersionId);
+          formDataUpload.append('documentType', 'business_registration_copy');
+
+          const res = await fetch(`${apiUrl}/documents/upload`, {
+            method: 'POST',
+            body: formDataUpload,
+          });
+          if (res.ok) {
+            setSsmVerifying(false);
+            setSsmVerified(true);
+            showToast('SSM Document uploaded successfully.', 'success');
+          } else {
+            throw new Error('Upload failed');
+          }
+        } catch (err) {
+          setSsmVerifying(false);
+          showToast('Failed to upload SSM document.', 'info');
+        }
+      } else {
+        setTimeout(() => {
+          setSsmVerifying(false);
+          setSsmVerified(true);
+          showToast('SSM Document verified by AI. Status: Active (98% confidence).', 'success');
+        }, 1000);
+      }
     }
   };
 
-  const handleTenancyUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTenancyUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
@@ -78,82 +164,151 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
       setTenancyVerifying(true);
       setTenancyVerified(false);
 
-      setTimeout(() => {
-        setTenancyVerifying(false);
-        setTenancyVerified(true);
-        showToast('Tenancy Agreement verified by AI. Tenant name aligns (96% confidence).', 'success');
-      }, 1000);
+      if (isRealDbApp && baseApp?.applicationVersionId) {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+          const formDataUpload = new FormData();
+          formDataUpload.append('file', file);
+          formDataUpload.append('applicationVersionId', baseApp.applicationVersionId);
+          formDataUpload.append('documentType', 'tenancy_agreement');
+
+          const res = await fetch(`${apiUrl}/documents/upload`, {
+            method: 'POST',
+            body: formDataUpload,
+          });
+          if (res.ok) {
+            setTenancyVerifying(false);
+            setTenancyVerified(true);
+            showToast('Tenancy Agreement uploaded successfully.', 'success');
+          } else {
+            throw new Error('Upload failed');
+          }
+        } catch (err) {
+          setTenancyVerifying(false);
+          showToast('Failed to upload Tenancy Agreement.', 'info');
+        }
+      } else {
+        setTimeout(() => {
+          setTenancyVerifying(false);
+          setTenancyVerified(true);
+          showToast('Tenancy Agreement verified by AI. Tenant name aligns (96% confidence).', 'success');
+        }, 1000);
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      // 1. Update general application status and confidence in the mock array
-      if (baseApp) {
-        baseApp.status = 'AI-Ready';
-        baseApp.aiConfidence = 96;
-        baseApp.documents = { total: 4, approved: 4, flagged: 0 };
-        mockApplicantApplications[appIndex] = { ...baseApp };
+    if (isRealDbApp && baseApp) {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+        
+        // Construct the full SubmitApplicationDto using formSnapshot from the loaded realApp
+        const payload = {
+          ...baseApp.formSnapshot,
+          businessName: businessName,
+          expiryDate: expiryDate,
+          id: baseApp.dbId,
+        };
+
+        const res = await fetch(`${apiUrl}/applications/submit`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          setIsSubmitting(false);
+          showToast('Corrections submitted successfully. Re-verification enqueued!', 'success');
+          setTimeout(() => {
+            router.push('/applicant/dashboard');
+          }, 1500);
+        } else {
+          throw new Error('Submit failed');
+        }
+      } catch (err) {
+        setIsSubmitting(false);
+        showToast('Failed to submit corrections. Please try again.', 'info');
       }
-
-      // 2. Update detailed info (SSM details, document list, findings list) in memory
-      const updatedDocs = appDetails ? appDetails.documents.map(doc => {
-        if (doc.id === 'DOC-005') {
-          return {
-            ...doc,
-            status: 'Verified' as const,
-            aiConfidence: 98,
-            fileName: ssmFile?.name || 'ssm_kee_food_ventures_updated.pdf',
-            fileSize: ssmFile?.size || '1.8 MB',
-            uploadedDate: new Date().toISOString().split('T')[0],
-          };
-        }
-        if (doc.id === 'DOC-006') {
-          return {
-            ...doc,
-            status: 'Verified' as const,
-            aiConfidence: 96,
-            fileName: tenancyFile?.name || 'tenancy_agreement_updated.pdf',
-            fileSize: tenancyFile?.size || '3.5 MB',
-            uploadedDate: new Date().toISOString().split('T')[0],
-          };
-        }
-        return doc;
-      }) : [];
-
-      updateMockApplicationDetails(id, {
-        status: 'AI-Ready',
-        aiConfidence: 96,
-        businessName,
-        businessExpiryDate: expiryDate,
-        documents: updatedDocs,
-        aiFindings: [], // Clear out discrepancies since they are resolved
-        auditLogs: [
-          {
-            id: `LOG-RESUBMIT-${Date.now()}`,
-            action: 'Corrections Resubmitted',
-            user: 'Applicant (Tan Kah Kee)',
-            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-            notes: 'Business name aligned, expiry date extended, SSM & Tenancy documents replaced. Auto-validation: Passed (96% overall match).',
-          },
-          ...(appDetails?.auditLogs || []),
-        ],
-      });
-
-      setIsSubmitting(false);
-      showToast('Corrections submitted successfully. Re-verification passed!', 'success');
-
-      // Redirect back to dashboard
+    } else {
       setTimeout(() => {
-        router.push('/applicant/dashboard');
-      }, 1500);
-    }, 1200);
+        // 1. Update general application status and confidence in the mock array
+        if (baseApp) {
+          const appIndex = mockApplicantApplications.findIndex(a => a.id === id);
+          baseApp.status = 'AI-Ready';
+          baseApp.aiConfidence = 96;
+          baseApp.documents = { total: 4, approved: 4, flagged: 0 };
+          if (appIndex !== -1) {
+            mockApplicantApplications[appIndex] = { ...baseApp };
+          }
+        }
+
+        // 2. Update detailed info (SSM details, document list, findings list) in memory
+        const updatedDocs = appDetails ? appDetails.documents.map((doc: any) => {
+          if (doc.id === 'DOC-005') {
+            return {
+              ...doc,
+              status: 'Verified' as const,
+              aiConfidence: 98,
+              fileName: ssmFile?.name || 'ssm_kee_food_ventures_updated.pdf',
+              fileSize: ssmFile?.size || '1.8 MB',
+              uploadedDate: new Date().toISOString().split('T')[0],
+            };
+          }
+          if (doc.id === 'DOC-006') {
+            return {
+              ...doc,
+              status: 'Verified' as const,
+              aiConfidence: 96,
+              fileName: tenancyFile?.name || 'tenancy_agreement_updated.pdf',
+              fileSize: tenancyFile?.size || '3.5 MB',
+              uploadedDate: new Date().toISOString().split('T')[0],
+            };
+          }
+          return doc;
+        }) : [];
+
+        updateMockApplicationDetails(id, {
+          status: 'AI-Ready',
+          aiConfidence: 96,
+          businessName,
+          businessExpiryDate: expiryDate,
+          documents: updatedDocs,
+          aiFindings: [], // Clear out discrepancies since they are resolved
+          auditLogs: [
+            {
+              id: `LOG-RESUBMIT-${Date.now()}`,
+              action: 'Corrections Resubmitted',
+              user: 'Applicant (Tan Kah Kee)',
+              timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+              notes: 'Business name aligned, expiry date extended, SSM & Tenancy documents replaced. Auto-validation: Passed (96% overall match).',
+            },
+            ...(appDetails?.auditLogs || []),
+          ],
+        });
+
+        setIsSubmitting(false);
+        showToast('Corrections submitted successfully. Re-verification passed!', 'success');
+
+        // Redirect back to dashboard
+        setTimeout(() => {
+          router.push('/applicant/dashboard');
+        }, 1500);
+      }, 1200);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-container-max-width mx-auto px-4 py-12 text-center flex flex-col items-center justify-center gap-2">
+        <span className="text-sm font-semibold text-text-muted">Loading application details...</span>
+      </div>
+    );
+  }
 
   if (appNotFound) {
     return (
@@ -309,27 +464,29 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
               </div>
 
               {/* Input Field 2: Business Registration Expiry Date */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-text-main uppercase tracking-wider">
-                  SSM Expiry Date <span className="text-error">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)}
-                  className={`w-full h-10 px-3 border rounded text-xs focus:outline-none transition-all ${
-                    expiryIssueResolved
-                      ? 'border-success/40 bg-success/5 focus:ring-1 focus:ring-success focus:border-success'
-                      : 'border-error/40 bg-error/5 focus:ring-1 focus:ring-error focus:border-error'
-                  }`}
-                  required
-                />
-                <span className={`text-[10px] ${expiryIssueResolved ? 'text-success font-medium' : 'text-error font-medium'}`}>
-                  {expiryIssueResolved
-                    ? 'Expiry date is valid (Active)'
-                    : 'Expiry date must be in the future (SSM profile is expired)'}
-                </span>
-              </div>
+              {!isSdnBhd && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-text-main uppercase tracking-wider">
+                    SSM Expiry Date <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={expiryDate}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                    className={`w-full h-10 px-3 border rounded text-xs focus:outline-none transition-all ${
+                      expiryIssueResolved
+                        ? 'border-success/40 bg-success/5 focus:ring-1 focus:ring-success focus:border-success'
+                        : 'border-error/40 bg-error/5 focus:ring-1 focus:ring-error focus:border-error'
+                    }`}
+                    required
+                  />
+                  <span className={`text-[10px] ${expiryIssueResolved ? 'text-success font-medium' : 'text-error font-medium'}`}>
+                    {expiryIssueResolved
+                      ? 'Expiry date is valid (Active)'
+                      : 'Expiry date must be in the future (SSM profile is expired)'}
+                  </span>
+                </div>
+              )}
 
               {/* Upload Dropzones */}
               <div className="border-t border-slate-100 pt-5 flex flex-col gap-5">

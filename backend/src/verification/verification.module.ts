@@ -4,6 +4,7 @@ import { VerificationController } from './verification.controller';
 import { BullModule } from '@nestjs/bullmq';
 import { VerificationConsumer } from './verification.processor';
 import { SupabaseModule } from '../supabase/supabase.module';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
     }),
   ],
   controllers: [VerificationController],
-  providers: [VerificationService, VerificationConsumer],
+  providers: [VerificationService, VerificationConsumer, PrismaService],
   exports: [VerificationService],
 })
 export class VerificationModule {}

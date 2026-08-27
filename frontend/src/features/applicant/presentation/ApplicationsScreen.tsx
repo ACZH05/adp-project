@@ -33,11 +33,11 @@ export const ApplicationsScreen: React.FC = () => {
               app.status === 'verifying'
             ) {
               displayStatus = 'Pending';
-            } else if (app.status === 'verified') {
+            } else if (app.status === 'verified' || app.status === 'verification_complete') {
               displayStatus = 'Approved';
             } else if (app.status === 'rejected') {
               displayStatus = 'Rejected';
-            } else if (app.status === 'flagged') {
+            } else if (app.status === 'flagged' || app.status === 'correction_required') {
               displayStatus = 'Flagged';
             }
 
@@ -51,6 +51,8 @@ export const ApplicationsScreen: React.FC = () => {
               documents: app.documents,
               formSnapshot: app.formSnapshot,
               applicationVersionId: app.applicationVersionId,
+              aiFindings: app.aiFindings || [],
+              docList: app.docList || [],
             };
           });
           setApplications(mapped);
@@ -273,13 +275,15 @@ export const ApplicationsScreen: React.FC = () => {
                   <div className="flex flex-col gap-1.5 w-full lg:w-64 shrink-0">
                     <div className="flex items-center justify-between text-xs font-semibold text-text-muted">
                       <span>AI Verification Match</span>
-                      <span className={`font-bold ${app.status === 'Draft' ? 'text-text-muted' : confStyle.textColor}`}>
-                        {app.status === 'Draft' ? 'N/A' : `${app.aiConfidence}%`}
+                      <span className={`font-bold ${app.status === 'Draft' ? 'text-text-muted' : app.aiConfidence === null ? 'text-warning animate-pulse' : confStyle.textColor}`}>
+                        {app.status === 'Draft' ? 'N/A' : app.aiConfidence === null ? 'Pending' : `${app.aiConfidence}%`}
                       </span>
                     </div>
                     <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
                       {app.status === 'Draft' ? (
                         <div className="h-full bg-slate-200" style={{ width: '0%' }} />
+                      ) : app.aiConfidence === null ? (
+                        <div className="h-full bg-warning/30 animate-pulse" style={{ width: '30%' }} />
                       ) : (
                         <div className={`h-full ${confStyle.barColor}`} style={{ width: `${app.aiConfidence}%` }} />
                       )}
@@ -290,10 +294,32 @@ export const ApplicationsScreen: React.FC = () => {
                     {app.status === 'Draft' ? (
                       <Button
                         onClick={() => {
+                          const docsMap: Record<string, any> = {};
+                          if (Array.isArray(app.docList)) {
+                            app.docList.forEach((doc: any) => {
+                              let key = 'passportPhoto';
+                              if (doc.documentType === 'identity_card_copy') key = 'icCopy';
+                              else if (doc.documentType === 'tenancy_agreement') key = 'tenancyAgreement';
+                              else if (doc.documentType === 'business_registration_copy') key = 'businessReg';
+
+                              docsMap[key] = {
+                                name: doc.fileName || 'document.pdf',
+                                size: doc.fileSize || '1.0 MB',
+                                status: 'verified',
+                                progress: 100,
+                                dbId: doc.id,
+                              };
+                            });
+                          }
+
                           const draftPayload = {
-                            applicationId: app.dbId,
-                            applicationVersionId: app.applicationVersionId,
-                            ...app.formSnapshot,
+                            data: {
+                              applicationId: app.dbId,
+                              applicationVersionId: app.applicationVersionId,
+                              ...app.formSnapshot,
+                            },
+                            completed: [1, 2, 3, 4, 5],
+                            docs: docsMap,
                           };
                           localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
                           router.push(APPLICANT_ROUTES.applyStart);
@@ -427,6 +453,85 @@ export const ApplicationsScreen: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Submitted Documents Section */}
+                    <div className="border-t border-border-muted pt-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Submitted Documents
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {app.docList && app.docList.length > 0 ? (
+                          app.docList.map((doc: any) => {
+                            let docLabel = 'Document';
+                            if (doc.documentType === 'applicant_passport_photo') docLabel = 'Passport-Sized Photo';
+                            else if (doc.documentType === 'identity_card_copy') docLabel = 'Identity Card / Passport Copy';
+                            else if (doc.documentType === 'business_registration_copy') docLabel = 'Business Registration Certificate (SSM)';
+                            else if (doc.documentType === 'tenancy_agreement') docLabel = 'Tenancy Agreement / Premise Usage Proof';
+
+                            return (
+                              <div key={doc.id} className="p-3 border border-border-muted rounded-lg bg-slate-50 flex items-center justify-between gap-3 flex-wrap">
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[9px] uppercase font-bold text-text-muted">{docLabel}</span>
+                                  <p className="text-xs font-semibold text-text-main truncate mt-0.5" title={doc.fileName}>{doc.fileName}</p>
+                                  {doc.aiStatus === 'flagged' && doc.aiMessage && (
+                                    <p className="text-[10px] text-error font-medium mt-1.5 leading-relaxed">
+                                      ⚠️ {doc.aiMessage}
+                                    </p>
+                                  )}
+                                </div>
+                                {doc.aiStatus === 'verifying' ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-warning/10 text-warning uppercase shrink-0">
+                                    Verifying...
+                                  </span>
+                                ) : doc.aiStatus === 'flagged' ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-error/10 text-error uppercase shrink-0">
+                                    AI Flagged
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success uppercase shrink-0">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    AI Verified
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-text-muted italic">No documents uploaded for this application.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Category 4: AI Verification Insights */}
+                    {app.aiFindings && app.aiFindings.length > 0 && (
+                      <div className="border-t border-border-muted pt-4">
+                        <h4 className="text-xs font-bold text-error uppercase tracking-wider mb-3">
+                          AI Verification Discrepancies ({app.aiFindings.length})
+                        </h4>
+                        <div className="flex flex-col gap-3">
+                          {app.aiFindings.map((finding: any, idx: number) => (
+                            <div key={finding.id || idx} className="p-4 border border-error/20 bg-error/5 rounded-lg flex flex-col gap-2">
+                              <div className="flex justify-between items-center">
+                                <h5 className="text-xs font-bold text-text-main flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                  {finding.title || 'Discrepancy'}
+                                </h5>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-error/10 text-error font-semibold uppercase">{finding.severity} Severity</span>
+                              </div>
+                              <p className="text-xs text-text-muted leading-relaxed">
+                                {finding.description}
+                              </p>
+                              <div className="bg-white p-2.5 rounded text-[11px] font-medium text-text-muted border-l-2 border-primary mt-1">
+                                <span className="font-semibold text-primary block uppercase text-[9px] mb-0.5">Required Action</span>
+                                {finding.suggestedAction}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </Card>

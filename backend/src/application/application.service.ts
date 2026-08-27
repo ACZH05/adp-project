@@ -210,8 +210,8 @@ export class ApplicationService {
         businessName: dto.businessName,
         position: dto.position,
         businessPhone: dto.businessPhone,
-        regDate: new Date(dto.regDate).toISOString().split('T')[0] as any,
-        expiryDate: new Date(dto.expiryDate).toISOString().split('T')[0] as any,
+        regDate: dto.regDate ? (new Date(dto.regDate).toISOString().split('T')[0] as any) : null,
+        expiryDate: dto.expiryDate ? (new Date(dto.expiryDate).toISOString().split('T')[0] as any) : null,
         regNumber: dto.regNumber,
         businessAddress: dto.businessAddress,
         premiseAddress: dto.premiseAddress,
@@ -286,6 +286,17 @@ export class ApplicationService {
             documents: {
               where: { uploadStatus: 'uploaded' },
             },
+            verificationJobs: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              include: {
+                verificationReport: {
+                  include: {
+                    verificationIssues: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -295,20 +306,59 @@ export class ApplicationService {
     return applications.map((app) => {
       const latestVersion = app.versions[0];
       const formSnapshot = (latestVersion?.formSnapshot as any) || {};
-      
+
+      // Retrieve latest verification job issues if they exist
+      const latestJob = latestVersion?.verificationJobs?.[0];
+      const report = latestJob?.verificationReport;
+      const issues = report?.verificationIssues || [];
+
+      // Calculate confidence score dynamically or return null if pending
+      const aiConfidence = report?.confidenceScore !== undefined && report?.confidenceScore !== null
+        ? Math.round(report.confidenceScore)
+        : null;
+
       return {
         id: app.id,
         applicationNo: app.applicationNo,
         status: app.status, // draft, submitted, etc.
         licenseType: formSnapshot.primaryType || 'Food Establishment License',
         submissionDate: app.updatedAt,
-        aiConfidence: app.status === 'draft' ? 0 : 92, // mock confidence score
+        aiConfidence,
         documents: {
           approved: latestVersion?.documents?.length || 0,
           total: 4,
         },
+        docList: (latestVersion?.documents || []).map((doc) => {
+          // Check if there is any issue associated with this document
+          const docIssue = issues.find((issue) => issue.applicationDocumentId === doc.id);
+          
+          let aiStatus = 'verified';
+          if (app.status === 'verification_in_progress') {
+            aiStatus = 'verifying';
+          } else if (docIssue) {
+            aiStatus = 'flagged';
+          }
+
+          return {
+            id: doc.id,
+            documentType: doc.documentType,
+            fileName: doc.fileName,
+            fileSize: doc.fileSize,
+            aiStatus,
+            aiMessage: docIssue ? docIssue.message : null,
+          };
+        }),
         formSnapshot,
         applicationVersionId: latestVersion?.id,
+        aiFindings: issues.map((issue) => ({
+          id: issue.id,
+          title: issue.fieldName ? `Field Mismatch: ${issue.fieldName}` : `Document Check: ${issue.documentType || 'General'}`,
+          category: issue.issueType === 'missing_document' ? 'Document Quality' : 'Discrepancy',
+          severity: issue.issueSeverity === 'high' ? 'High' : issue.issueSeverity === 'medium' ? 'Medium' : 'Low',
+          description: issue.message,
+          field: issue.fieldName || 'N/A',
+          suggestedAction: issue.recommendedCorrection || 'Please verify the details and upload documents.',
+        })),
       };
     });
   }

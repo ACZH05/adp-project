@@ -230,15 +230,15 @@ export const DashboardPage: React.FC = () => {
                   <h3 className="text-sm font-bold text-warning uppercase tracking-wide">
                     AI Verification in Progress
                   </h3>
-                  <span className="text-xs font-bold text-text-muted">
-                    92% Complete
+                   <span className="text-xs font-bold text-warning animate-pulse">
+                    Scanning...
                   </span>
                 </div>
                 <p className="text-sm text-text-muted mt-1">
                   AI scanner is currently analyzing your business license documents and cross-matching fields.
                 </p>
                 <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden mt-3">
-                  <div className="bg-warning h-full" style={{ width: "92%" }} />
+                  <div className="bg-warning h-full animate-pulse" style={{ width: "40%" }} />
                 </div>
               </div>
             </div>
