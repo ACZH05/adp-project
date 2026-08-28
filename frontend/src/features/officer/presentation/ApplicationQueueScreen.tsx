@@ -6,23 +6,23 @@ import { KPICard } from './KPICard';
 import { FilterBar } from './FilterBar';
 import { DataTable } from './DataTable';
 import { mockApplications, getQueueStats, Application } from '../data/mockApplications';
+import { fetchOfficerQueue } from '@/src/shared/api/officerApi';
 import { useToast } from '@/src/shared/hooks/useToast';
 import { ToastNotification } from '@/src/shared/components/ToastNotification';
 
 export const ApplicationQueueScreen: React.FC = () => {
   const router = useRouter();
   // State
-  const [appsList, setAppsList] = useState<Application[]>(mockApplications);
+  const [appsList, setAppsList] = useState<Application[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [scoreFilter, setScoreFilter] = useState('all');
 
   // Sorting State
   const [sortField, setSortField] = useState<'submissionDate' | 'aiConfidence' | null>('submissionDate');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Simulated Loading State
-  const [isLoading, setIsLoading] = useState(false);
+  // Loading State
+  const [isLoading, setIsLoading] = useState(true);
 
   // Toast notification state
   const { toast, showToast } = useToast();
@@ -35,29 +35,85 @@ export const ApplicationQueueScreen: React.FC = () => {
   const [newStatus, setNewStatus] = useState<'Pending' | 'AI-Ready' | 'Flagged'>('AI-Ready');
   const [newIsUrgent, setNewIsUrgent] = useState(false);
 
-  // Wrapper handlers that set loading state on user interaction
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
-    setIsLoading(true);
-  };
-
-  const handleStatusFilterChange = (val: string) => {
-    setStatusFilter(val);
-    setIsLoading(true);
   };
 
   const handleScoreFilterChange = (val: string) => {
     setScoreFilter(val);
-    setIsLoading(true);
   };
 
-  // Trigger simulated loading effect when filters change to show skeleton loader
+  // Fetch real backend officer queue applications (pending review cases only)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 450);
-    return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, scoreFilter, sortField, sortDirection]);
+    let isMounted = true;
+    async function loadBackendQueue() {
+      try {
+        setIsLoading(true);
+
+        const result = await fetchOfficerQueue({
+          status: 'pending_officer_review',
+          search: searchQuery.trim() || undefined,
+        });
+
+        if (isMounted && result.data && Array.isArray(result.data)) {
+          const mappedApps: Application[] = result.data.map((app: any) => {
+            const report = app.currentApplicationVersion?.verificationJobs?.[0]?.verificationReport;
+            const overallResult = report?.overallResult;
+
+            let status: Application['status'] = 'Pending';
+            if (app.status === 'approved') {
+              status = 'Approved';
+            } else if (app.status === 'rejected') {
+              status = 'Rejected';
+            } else if (app.status === 'verification_complete') {
+              status = 'AI-Ready';
+            } else if (app.status === 'manual_prescreening_required' || app.status === 'correction_required') {
+              status = 'Flagged';
+            } else if (app.status === 'pending_officer_review' || app.status === 'submitted' || app.status === 'verification_queued') {
+              status = 'Pending';
+            } else if (overallResult === 'passed') {
+              status = 'Passed';
+            } else if (overallResult === 'issues_found') {
+              status = 'Issues Found';
+            } else if (overallResult === 'low_confidence') {
+              status = 'Low Confidence';
+            } else if (overallResult === 'failed') {
+              status = 'Failed';
+            }
+
+            const score = report?.confidenceScore != null ? Math.round(report.confidenceScore * 100) : 85;
+
+            return {
+              id: app.id,
+              displayId: app.applicationNo || app.id,
+              applicantName: app.applicantFullName || app.applicant?.fullName || 'Unknown Applicant',
+              applicantIcNo: app.applicantIcNo,
+              businessName: app.businessName,
+              licenseType: app.entertainmentType || 'Entertainment License',
+              submissionDate: app.submittedAt ? new Date(app.submittedAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+              status,
+              aiConfidence: score,
+              isUrgent: false,
+            };
+          });
+
+          setAppsList(mappedApps);
+        }
+      } catch (err) {
+        console.error('Failed to fetch officer queue from backend:', err);
+        if (isMounted) {
+          setAppsList([]);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadBackendQueue();
+    return () => {
+      isMounted = false;
+    };
+  }, [searchQuery]);
 
   // KPI Queue Stats
   const globalStats = useMemo(() => getQueueStats(appsList), [appsList]);
@@ -69,7 +125,7 @@ export const ApplicationQueueScreen: React.FC = () => {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection('desc');
+      setSortDirection('asc');
     }
   };
 
@@ -85,14 +141,7 @@ export const ApplicationQueueScreen: React.FC = () => {
       );
     }
 
-    // 2. Filter by Status
-    if (statusFilter !== 'all') {
-      result = result.filter(app => app.status === statusFilter);
-    }
-
-
-
-    // 4. Filter by AI Score Range
+    // 2. Filter by AI Score Range
     if (scoreFilter !== 'all') {
       result = result.filter(app => {
         if (scoreFilter === 'high') return app.aiConfidence >= 80;
@@ -102,7 +151,7 @@ export const ApplicationQueueScreen: React.FC = () => {
       });
     }
 
-    // 5. Sort Results
+    // 3. Sort Results
     if (sortField) {
       result.sort((a, b) => {
         const valA = a[sortField];
@@ -123,14 +172,13 @@ export const ApplicationQueueScreen: React.FC = () => {
     }
 
     return result;
-  }, [appsList, searchQuery, statusFilter, scoreFilter, sortField, sortDirection]);
+  }, [appsList, searchQuery, scoreFilter, sortField, sortDirection]);
 
-  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || scoreFilter !== 'all';
+  const hasActiveFilters = searchQuery !== '' || scoreFilter !== 'all';
 
   const clearFilters = () => {
     setIsLoading(true);
     setSearchQuery('');
-    setStatusFilter('all');
     setScoreFilter('all');
     showToast('Filters cleared', 'info');
   };
@@ -234,9 +282,9 @@ export const ApplicationQueueScreen: React.FC = () => {
             }
           />
           <KPICard
-            title="Urgent Cases"
-            value={globalStats.urgentCases}
-            subtitle="Flagged / SLA warning"
+            title="Low Confidence"
+            value={globalStats.lowConfidence}
+            subtitle="Requires audit (score < 50%)"
             variant="danger"
             icon={
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -267,13 +315,10 @@ export const ApplicationQueueScreen: React.FC = () => {
         <FilterBar
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
-          statusFilter={statusFilter}
-          onStatusFilterChange={handleStatusFilterChange}
           scoreFilter={scoreFilter}
           onScoreFilterChange={handleScoreFilterChange}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          onNewReview={() => setIsModalOpen(true)}
           onExport={handleExport}
         />
 

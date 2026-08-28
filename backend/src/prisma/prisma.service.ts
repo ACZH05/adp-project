@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../../generated/prisma/client';
 import pkg from 'pg';
@@ -11,7 +12,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   constructor() {
     const connectionString = process.env.DATABASE_URL;
-    const pool = new Pool({ connectionString });
+    const pool = new Pool({
+      connectionString,
+      ssl: connectionString?.includes('supabase.com') ? { rejectUnauthorized: false } : undefined,
+    });
     const adapter = new PrismaPg(pool);
     super({ adapter });
     this.pool = pool;

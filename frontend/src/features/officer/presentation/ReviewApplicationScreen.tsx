@@ -9,6 +9,7 @@ import { DecisionPanel } from './DecisionPanel';
 import { DocumentViewerModal } from './DocumentViewerModal';
 import { mockApplications } from '../data/mockApplications';
 import { getApplicationDetails, ApplicationDetail, DocumentDetail, AuditLogEntry } from '../data/mockApplicationDetails';
+import { fetchApplicationDetail, submitOfficerDecision } from '@/src/shared/api/officerApi';
 
 interface ReviewApplicationScreenProps {
   id: string;
@@ -27,31 +28,98 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
   }
 
   useEffect(() => {
-    // Simulate API loading from mock database
-    const timer = setTimeout(() => {
-      // Find the general application record first
-      const generalApp = mockApplications.find(a => a.id === id);
-      if (generalApp) {
-        const detail = getApplicationDetails(generalApp);
-        setAppDetail(detail);
-      } else {
-        // Create a fake default case if an arbitrary ID is searched or accessed
-        const dummyApp = {
-          id,
-          applicantName: "Unknown Applicant",
-          licenseType: "Entertainment License",
-          submissionDate: new Date().toISOString().slice(0, 10),
-          status: "Pending" as const,
-          aiConfidence: 50,
-          isUrgent: false
-        };
-        const detail = getApplicationDetails(dummyApp);
-        setAppDetail(detail);
-      }
-      setIsLoading(false);
-    }, 400);
+    let isMounted = true;
+    async function loadCaseData() {
+      try {
+        setIsLoading(true);
+        // Attempt fetching real case data from backend API
+        const backendApp = await fetchApplicationDetail(id);
 
-    return () => clearTimeout(timer);
+        if (isMounted && backendApp) {
+          let status: ApplicationDetail['status'] = 'Pending';
+          if (backendApp.status === 'verification_complete') status = 'AI-Ready';
+          else if (backendApp.status === 'manual_prescreening_required' || backendApp.status === 'correction_required') status = 'Flagged';
+          else if (backendApp.status === 'approved') status = 'Processed';
+          else if (backendApp.status === 'rejected') status = 'Rejected';
+
+          const report = backendApp.currentApplicationVersion?.verificationJobs?.[0]?.verificationReport;
+          const score = report?.confidenceScore != null ? Math.round(report.confidenceScore * 100) : 85;
+
+          const generalApp = {
+            id: backendApp.id,
+            applicantName: backendApp.applicantFullName || backendApp.applicant?.fullName || 'Unknown Applicant',
+            licenseType: backendApp.entertainmentType || 'Entertainment License',
+            submissionDate: backendApp.submittedAt ? new Date(backendApp.submittedAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+            status,
+            aiConfidence: score,
+            isUrgent: false,
+          };
+
+          const detail = getApplicationDetails(generalApp);
+
+          // Map database officer decision history into audit logs (1 decision per application)
+          const dbAuditLogs: AuditLogEntry[] = (backendApp.officerDecisions || []).slice(0, 1).map((d: any) => {
+            let actionName = 'Officer Decision';
+            if (d.decisionType === 'approved') actionName = 'Application Approved';
+            else if (d.decisionType === 'rejected') actionName = 'Application Rejected';
+            else if (d.decisionType === 'correction_required') actionName = 'Correction Requested';
+
+            let notesCombined = d.officerNote || '';
+            if (d.reason) {
+              notesCombined = notesCombined ? `${notesCombined}\nReason: ${d.reason}` : `Reason: ${d.reason}`;
+            }
+
+            return {
+              id: d.id,
+              action: actionName,
+              user: d.officerUser?.fullName ? `Officer (${d.officerUser.fullName})` : 'Officer (Senior Reviewer)',
+              timestamp: d.decidedAt ? new Date(d.decidedAt).toISOString().replace('T', ' ').slice(0, 19) : new Date().toISOString().replace('T', ' ').slice(0, 19),
+              notes: notesCombined || undefined,
+            };
+          });
+
+          // Keep non-officer timeline logs (submission & AI checks), replacing previous decision logs
+          const nonOfficerLogs = detail.auditLogs.filter(
+            l => !l.action.includes('Approved') && !l.action.includes('Rejected') && !l.action.includes('Correction') && !l.action.includes('Officer Decision')
+          );
+
+          detail.auditLogs = [...nonOfficerLogs, ...dbAuditLogs];
+
+          setAppDetail(detail);
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Backend application detail offline or using mock fallback:', err);
+      }
+
+      // Mock fallback if API offline or custom mock ID
+      if (isMounted) {
+        const generalApp = mockApplications.find(a => a.id === id);
+        if (generalApp) {
+          const detail = getApplicationDetails(generalApp);
+          setAppDetail(detail);
+        } else {
+          const dummyApp = {
+            id,
+            applicantName: "Unknown Applicant",
+            licenseType: "Entertainment License",
+            submissionDate: new Date().toISOString().slice(0, 10),
+            status: "Pending" as const,
+            aiConfidence: 50,
+            isUrgent: false
+          };
+          const detail = getApplicationDetails(dummyApp);
+          setAppDetail(detail);
+        }
+        setIsLoading(false);
+      }
+    }
+
+    loadCaseData();
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -61,27 +129,53 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
     }, 4500);
   };
 
-  const handleDecision = (
+  const handleDecision = async (
     newStatus: ApplicationDetail['status'],
     actionName: string,
-    notes: string
+    notes: string,
+    reason?: string
   ) => {
     if (!appDetail) return;
 
+    let backendDecisionType: 'approved' | 'rejected' | 'correction_required' = 'approved';
+    if (newStatus === 'Processed' || newStatus === 'Approved') backendDecisionType = 'approved';
+    else if (newStatus === 'Rejected') backendDecisionType = 'rejected';
+    else backendDecisionType = 'correction_required';
+
+    let backendResult: any = null;
+    try {
+      backendResult = await submitOfficerDecision(appDetail.id, {
+        decisionType: backendDecisionType,
+        officerNote: notes,
+        reason: reason || (backendDecisionType !== 'approved' ? notes : undefined),
+      });
+    } catch (err) {
+      console.warn('Backend decision submission failed or offline (using local state update):', err);
+    }
+
+    const logNotes = reason ? `${notes}\nReason: ${reason}` : notes;
+
     // Build new audit trail entry
     const newLog: AuditLogEntry = {
-      id: `LOG-NEW-${Date.now()}`,
+      id: backendResult?.decision?.id || `LOG-NEW-${Date.now()}`,
       action: actionName,
-      user: "Officer Tan (Senior Reviewer)",
+      user: backendResult?.decision?.officerUser?.fullName
+        ? `Officer (${backendResult.decision.officerUser.fullName})`
+        : "Officer (Senior Reviewer)",
       timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      notes
+      notes: logNotes,
     };
+
+    // Keep non-officer timeline logs, replacing previous decision log with the updated decision
+    const nonOfficerLogs = appDetail.auditLogs.filter(
+      l => !l.action.includes('Approved') && !l.action.includes('Rejected') && !l.action.includes('Correction') && !l.action.includes('Officer Decision')
+    );
 
     // Update local state
     const updatedDetails: ApplicationDetail = {
       ...appDetail,
       status: newStatus,
-      auditLogs: [newLog, ...appDetail.auditLogs]
+      auditLogs: [...nonOfficerLogs, newLog]
     };
 
     // Reflect status updates in the global mock database for this session
