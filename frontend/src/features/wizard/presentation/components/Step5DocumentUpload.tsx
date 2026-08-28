@@ -6,12 +6,13 @@ export interface UploadedFile {
   size: string;
   status: 'uploading' | 'verified' | 'flagged';
   progress: number;
+  dbId?: string;
 }
 
 interface Step5Props {
   documents: Record<string, UploadedFile | undefined>;
   errors: Record<string, string>;
-  onUploadFile: (key: string, name: string, size: string) => void;
+  onUploadFile: (key: string, file: File) => void;
   onDeleteFile: (key: string) => void;
 }
 
@@ -32,8 +33,7 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-      onUploadFile(key, file.name, sizeStr);
+      onUploadFile(key, file);
     }
   };
 
@@ -41,8 +41,7 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-      onUploadFile(key, file.name, sizeStr);
+      onUploadFile(key, file);
     }
   };
 
@@ -150,13 +149,13 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
                         </div>
                       )}
                       {file.status === 'flagged' && (
-                        <div className="flex items-center gap-1.5 bg-warning/10 text-warning text-xs font-bold px-2.5 py-1 rounded-full">
+                        <div className="flex items-center gap-1.5 bg-error/10 text-error text-xs font-bold px-2.5 py-1 rounded-full">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                             <line x1="12" y1="9" x2="12" y2="13" />
                             <line x1="12" y1="17" x2="12.01" y2="17" />
                           </svg>
-                          Low Confidence / Flagged
+                          Upload Failed
                         </div>
                       )}
                       {file.status === 'uploading' && (
@@ -165,7 +164,7 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          AI Scanning...
+                          Uploading...
                         </div>
                       )}
 
@@ -197,15 +196,9 @@ export const Step5DocumentUpload: React.FC<Step5Props> = ({
                     </div>
                   )}
 
-                  {/* Prompt for Low Confidence */}
-                  {file.status === 'flagged' && (
-                    <p className="text-xs text-warning bg-warning/5 border border-warning/10 p-2.5 rounded-md leading-relaxed">
-                      <strong>AI Flagged:</strong> Hand-written sections or low image resolution detected. Please ensure all details are legible to prevent officer rejection.
-                    </p>
-                  )}
                   {file.status === 'verified' && (
-                    <p className="text-xs text-success bg-success/5 border border-success/10 p-2.5 rounded-md leading-relaxed">
-                      <strong>AI Verified:</strong> Successfully parsed metadata. The document is clearly legible and complete.
+                    <p className="text-xs text-success bg-success/5 border border-success/10 p-2 px-3 rounded-md leading-relaxed">
+                      Document uploaded successfully.
                     </p>
                   )}
                 </div>

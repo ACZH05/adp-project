@@ -39,6 +39,21 @@ class FormCompletenessRule(BaseVerificationRule):
     def evaluate(
         self, payload: VerificationRequest
     ) -> list[VerificationIssue]:
+        is_sdn_bhd = False
+        business_name = getattr(payload.form_data, "businessName", "")
+        company_name = getattr(payload.form_data, "companyName", "")
+        if (
+            "sdn" in str(business_name).lower() and "bhd" in str(business_name).lower()
+        ) or (
+            "sdn" in str(company_name).lower() and "bhd" in str(company_name).lower()
+        ):
+            is_sdn_bhd = True
+
+        fields_to_check = [
+            f for f in REQUIRED_FORM_FIELDS
+            if not (f == "expiryDate" and is_sdn_bhd)
+        ]
+
         return [
             VerificationIssue(
                 issue_type="other",
@@ -51,7 +66,7 @@ class FormCompletenessRule(BaseVerificationRule):
                 ),
                 rule_hit=f"form_completeness.{field_name}",
             )
-            for field_name in REQUIRED_FORM_FIELDS
+            for field_name in fields_to_check
             if self._is_missing(getattr(payload.form_data, field_name))
         ]
 

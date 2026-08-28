@@ -69,15 +69,17 @@ export const Step2BusinessInfo: React.FC<Step2Props> = ({
           required
         />
 
-        <TextInput
-          label="Expiry Date"
-          id="expiryDate"
-          type="date"
-          value={data.expiryDate}
-          onChange={(e) => onChange('expiryDate', e.target.value)}
-          error={errors.expiryDate}
-          required
-        />
+        {!/sdn\.?\s*bhd\.?/i.test(data.businessName || '') && (
+          <TextInput
+            label="Expiry Date"
+            id="expiryDate"
+            type="date"
+            value={data.expiryDate}
+            onChange={(e) => onChange('expiryDate', e.target.value)}
+            error={errors.expiryDate}
+            required
+          />
+        )}
 
         <div className="md:col-span-2">
           <TextInput

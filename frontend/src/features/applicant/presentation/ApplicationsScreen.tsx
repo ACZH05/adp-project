@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/src/shared/components/Button';
 import { Card } from '@/src/shared/components/Card';
 import { StatusBadge } from '@/src/shared/components/StatusBadge';
 import { APPLICANT_ROUTES, APPLICATION_STATUS_FILTERS } from '../data/applicantConstants';
-import { getMockApplications } from '../data/applicantMockService';
 
 export const ApplicationsScreen: React.FC = () => {
   const router = useRouter();
@@ -14,12 +13,65 @@ export const ApplicationsScreen: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedAppId, setExpandedAppId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem('adp_user_email') || 'test@example.com';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+
+    fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const mapped = data.map(app => {
+            let displayStatus = 'Draft';
+            if (
+              app.status === 'submitted' ||
+              app.status === 'verification_queued' ||
+              app.status === 'verifying'
+            ) {
+              displayStatus = 'Pending';
+            } else if (app.status === 'verified' || app.status === 'verification_complete') {
+              displayStatus = 'Approved';
+            } else if (app.status === 'rejected') {
+              displayStatus = 'Rejected';
+            } else if (app.status === 'flagged' || app.status === 'correction_required') {
+              displayStatus = 'Flagged';
+            }
+
+            return {
+              id: app.applicationNo || app.id,
+              dbId: app.id,
+              licenseType: app.licenseType,
+              submissionDate: app.submissionDate,
+              aiConfidence: app.aiConfidence,
+              status: displayStatus,
+              documents: app.documents,
+              formSnapshot: app.formSnapshot,
+              applicationVersionId: app.applicationVersionId,
+              aiFindings: app.aiFindings || [],
+              docList: app.docList || [],
+            };
+          });
+          setApplications(mapped);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load applications:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
   const handleStartWizard = () => {
     router.push(APPLICANT_ROUTES.applyStart);
   };
 
   const processedApplications = useMemo(() => {
-    let result = [...getMockApplications()];
+    let result = [...applications];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -55,7 +107,7 @@ export const ApplicationsScreen: React.FC = () => {
     });
 
     return result;
-  }, [searchQuery, statusFilter, sortBy]);
+  }, [applications, searchQuery, statusFilter, sortBy]);
 
   const getConfidenceStyles = (score: number) => {
     if (score >= 80) return { barColor: 'bg-success', textColor: 'text-success' };
@@ -185,7 +237,11 @@ export const ApplicationsScreen: React.FC = () => {
       </Card>
 
       <div className="flex flex-col gap-4">
-        {processedApplications.length > 0 ? (
+        {loading ? (
+          <Card className="border border-border-muted p-12 bg-white text-center flex flex-col items-center justify-center gap-2">
+            <span className="text-sm font-semibold text-text-muted">Loading applications...</span>
+          </Card>
+        ) : processedApplications.length > 0 ? (
           processedApplications.map((app) => {
             const confStyle = getConfidenceStyles(app.aiConfidence);
             return (
@@ -219,13 +275,15 @@ export const ApplicationsScreen: React.FC = () => {
                   <div className="flex flex-col gap-1.5 w-full lg:w-64 shrink-0">
                     <div className="flex items-center justify-between text-xs font-semibold text-text-muted">
                       <span>AI Verification Match</span>
-                      <span className={`font-bold ${app.status === 'Draft' ? 'text-text-muted' : confStyle.textColor}`}>
-                        {app.status === 'Draft' ? 'N/A' : `${app.aiConfidence}%`}
+                      <span className={`font-bold ${app.status === 'Draft' ? 'text-text-muted' : app.aiConfidence === null ? 'text-warning animate-pulse' : confStyle.textColor}`}>
+                        {app.status === 'Draft' ? 'N/A' : app.aiConfidence === null ? 'Pending' : `${app.aiConfidence}%`}
                       </span>
                     </div>
                     <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
                       {app.status === 'Draft' ? (
                         <div className="h-full bg-slate-200" style={{ width: '0%' }} />
+                      ) : app.aiConfidence === null ? (
+                        <div className="h-full bg-warning/30 animate-pulse" style={{ width: '30%' }} />
                       ) : (
                         <div className={`h-full ${confStyle.barColor}`} style={{ width: `${app.aiConfidence}%` }} />
                       )}
@@ -235,7 +293,37 @@ export const ApplicationsScreen: React.FC = () => {
                   <div className="flex items-center justify-start lg:justify-end shrink-0 w-full lg:w-36">
                     {app.status === 'Draft' ? (
                       <Button
-                        onClick={() => router.push(APPLICANT_ROUTES.applyStart)}
+                        onClick={() => {
+                          const docsMap: Record<string, any> = {};
+                          if (Array.isArray(app.docList)) {
+                            app.docList.forEach((doc: any) => {
+                              let key = 'passportPhoto';
+                              if (doc.documentType === 'identity_card_copy') key = 'icCopy';
+                              else if (doc.documentType === 'tenancy_agreement') key = 'tenancyAgreement';
+                              else if (doc.documentType === 'business_registration_copy') key = 'businessReg';
+
+                              docsMap[key] = {
+                                name: doc.fileName || 'document.pdf',
+                                size: doc.fileSize || '1.0 MB',
+                                status: 'verified',
+                                progress: 100,
+                                dbId: doc.id,
+                              };
+                            });
+                          }
+
+                          const draftPayload = {
+                            data: {
+                              applicationId: app.dbId,
+                              applicationVersionId: app.applicationVersionId,
+                              ...app.formSnapshot,
+                            },
+                            completed: [1, 2, 3, 4, 5],
+                            docs: docsMap,
+                          };
+                          localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
+                          router.push(APPLICANT_ROUTES.applyStart);
+                        }}
                         className="w-full lg:w-auto text-xs py-2 px-4 bg-primary text-white hover:bg-primary-container"
                       >
                         Resume Application
@@ -249,14 +337,203 @@ export const ApplicationsScreen: React.FC = () => {
                       </Button>
                     ) : (
                       <Button
-                        onClick={() => router.push(APPLICANT_ROUTES.dashboard)}
+                        onClick={() => setExpandedAppId(expandedAppId === app.id ? null : app.id)}
                         className="w-full lg:w-auto text-xs py-2 px-4"
                       >
-                        View Details
+                        {expandedAppId === app.id ? 'Hide Details' : 'View Details'}
                       </Button>
                     )}
                   </div>
                 </div>
+
+                {/* Collapsible Details Area inside listing card */}
+                {expandedAppId === app.id && (
+                  <div className="border-t border-border-muted pt-5 mt-5 flex flex-col gap-6 animate-fadeIn">
+                    {/* Category 1: Applicant Info */}
+                    <div>
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Applicant Information
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Full Name</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.fullName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">IC/Passport No.</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.icPassport || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Date of Birth</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.dob || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Email Address</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.email || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Contact Number</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.contactNumber || 'N/A'}</p>
+                        </div>
+                        <div className="sm:col-span-2 md:col-span-3">
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Residential Address</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5 whitespace-pre-line">{app.formSnapshot.residentialAddress || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category 2: Business Info */}
+                    <div className="border-t border-border-muted pt-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Business Details
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Company Name</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.companyName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Business Name</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.businessName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">SSM Registration No.</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.regNumber || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Position / Designation</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.position || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Registration Date</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.regDate || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Expiry Date</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.expiryDate || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category 3: Premises & Licensing Info */}
+                    <div className="border-t border-border-muted pt-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Premises & License Parameters
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">License Type</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.licenseType}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Premises Type</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.premiseType || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Floor Level</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.floorLevel || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Capacity Quantity</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.quantityCapacity} {app.formSnapshot.quantityUnit || ''}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Operating Hours</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">
+                            {app.formSnapshot.operatingHoursStart} - {app.formSnapshot.operatingHoursEnd}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Requested License Duration</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5">{app.formSnapshot.requestedDuration} Months</p>
+                        </div>
+                        <div className="sm:col-span-2 md:col-span-3">
+                          <span className="text-[10px] uppercase font-bold text-text-muted">Premises Address</span>
+                          <p className="text-xs font-semibold text-text-main mt-0.5 whitespace-pre-line">{app.formSnapshot.premiseAddress || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submitted Documents Section */}
+                    <div className="border-t border-border-muted pt-4">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                        Submitted Documents
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {app.docList && app.docList.length > 0 ? (
+                          app.docList.map((doc: any) => {
+                            let docLabel = 'Document';
+                            if (doc.documentType === 'applicant_passport_photo') docLabel = 'Passport-Sized Photo';
+                            else if (doc.documentType === 'identity_card_copy') docLabel = 'Identity Card / Passport Copy';
+                            else if (doc.documentType === 'business_registration_copy') docLabel = 'Business Registration Certificate (SSM)';
+                            else if (doc.documentType === 'tenancy_agreement') docLabel = 'Tenancy Agreement / Premise Usage Proof';
+
+                            return (
+                              <div key={doc.id} className="p-3 border border-border-muted rounded-lg bg-slate-50 flex items-center justify-between gap-3 flex-wrap">
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[9px] uppercase font-bold text-text-muted">{docLabel}</span>
+                                  <p className="text-xs font-semibold text-text-main truncate mt-0.5" title={doc.fileName}>{doc.fileName}</p>
+                                  {doc.aiStatus === 'flagged' && doc.aiMessage && (
+                                    <p className="text-[10px] text-error font-medium mt-1.5 leading-relaxed">
+                                      ⚠️ {doc.aiMessage}
+                                    </p>
+                                  )}
+                                </div>
+                                {doc.aiStatus === 'verifying' ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-warning/10 text-warning uppercase shrink-0">
+                                    Verifying...
+                                  </span>
+                                ) : doc.aiStatus === 'flagged' ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-error/10 text-error uppercase shrink-0">
+                                    AI Flagged
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success uppercase shrink-0">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    AI Verified
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-text-muted italic">No documents uploaded for this application.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Category 4: AI Verification Insights */}
+                    {app.aiFindings && app.aiFindings.length > 0 && (
+                      <div className="border-t border-border-muted pt-4">
+                        <h4 className="text-xs font-bold text-error uppercase tracking-wider mb-3">
+                          AI Verification Discrepancies ({app.aiFindings.length})
+                        </h4>
+                        <div className="flex flex-col gap-3">
+                          {app.aiFindings.map((finding: any, idx: number) => (
+                            <div key={finding.id || idx} className="p-4 border border-error/20 bg-error/5 rounded-lg flex flex-col gap-2">
+                              <div className="flex justify-between items-center">
+                                <h5 className="text-xs font-bold text-text-main flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                  {finding.title || 'Discrepancy'}
+                                </h5>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-error/10 text-error font-semibold uppercase">{finding.severity} Severity</span>
+                              </div>
+                              <p className="text-xs text-text-muted leading-relaxed">
+                                {finding.description}
+                              </p>
+                              <div className="bg-white p-2.5 rounded text-[11px] font-medium text-text-muted border-l-2 border-primary mt-1">
+                                <span className="font-semibold text-primary block uppercase text-[9px] mb-0.5">Required Action</span>
+                                {finding.suggestedAction}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
             );
           })

@@ -55,7 +55,7 @@ class FormData(BaseModel):
     position: str
     businessPhone: str
     regDate: date
-    expiryDate: date
+    expiryDate: date | None = None
     regNumber: str
     businessAddress: str
     premiseAddress: str

@@ -17,7 +17,7 @@ interface WizardContextType {
   referenceId: string;
   setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handleFieldChange: (field: string, value: string | boolean) => void;
-  handleUploadFile: (key: string, name: string, size: string) => void;
+  handleUploadFile: (key: string, file: File) => void;
   handleDeleteFile: (key: string) => void;
   handleNext: () => void;
   handleBack: () => void;
@@ -28,6 +28,8 @@ interface WizardContextType {
 }
 
 const initialFormData: WizardFormData = {
+  applicationId: '',
+  applicationVersionId: '',
   fullName: '',
   icPassport: '',
   dob: '',
@@ -113,14 +115,16 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const handleUploadFile = (key: string, name: string, size: string) => {
+  const handleUploadFile = async (key: string, file: File) => {
+    const sizeStr = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+
     setDocuments((prev) => ({
       ...prev,
       [key]: {
-        name,
-        size,
+        name: file.name,
+        size: sizeStr,
         status: 'uploading',
-        progress: 0,
+        progress: 10,
       },
     }));
 
@@ -132,45 +136,106 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
     }
 
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      setDocuments((prev) => {
-        const file = prev[key];
-        if (!file) return prev;
-        return {
-          ...prev,
-          [key]: {
-            ...file,
-            progress: currentProgress,
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+      let currentVersionId = formData.applicationVersionId;
+      let currentAppId = formData.applicationId;
+
+      // If we don't have an applicationVersionId yet, save draft to generate one!
+      if (!currentVersionId) {
+        const response = await fetch(`${apiUrl}/applications/draft`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        };
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to create application draft version for upload');
+        }
+        const result = await response.json();
+        currentAppId = result.applicationId;
+        currentVersionId = result.applicationVersionId;
+
+        setFormData((prev) => ({
+          ...prev,
+          applicationId: currentAppId,
+          applicationVersionId: currentVersionId,
+        }));
+      }
+
+      // Map frontend keys to backend DocumentType
+      let docType = '';
+      if (key === 'passportPhoto') docType = 'applicant_passport_photo';
+      else if (key === 'icCopy') docType = 'identity_card_copy';
+      else if (key === 'businessReg') docType = 'business_registration_copy';
+      else if (key === 'tenancyAgreement') docType = 'tenancy_agreement';
+
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('applicationVersionId', currentVersionId!);
+      formDataUpload.append('documentType', docType);
+
+      setDocuments((prev) => ({
+        ...prev,
+        [key]: { ...prev[key]!, progress: 50 },
+      }));
+
+      const uploadResponse = await fetch(`${apiUrl}/documents/upload`, {
+        method: 'POST',
+        body: formDataUpload,
       });
 
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        const finalStatus = 'verified';
-        setDocuments((prev) => {
-          const file = prev[key];
-          if (!file) return prev;
-          return {
-            ...prev,
-            [key]: {
-              ...file,
-              status: finalStatus,
-              progress: 100,
-            },
-          };
-        });
+      if (!uploadResponse.ok) {
+        throw new Error('File upload failed on server');
       }
-    }, 100);
+
+      const uploadResult = await uploadResponse.json();
+
+      setDocuments((prev) => ({
+        ...prev,
+        [key]: {
+          name: file.name,
+          size: sizeStr,
+          status: 'verified',
+          progress: 100,
+          dbId: uploadResult.id,
+        },
+      }));
+    } catch (err) {
+      console.error('File upload error:', err);
+      setDocuments((prev) => ({
+        ...prev,
+        [key]: {
+          name: file.name,
+          size: sizeStr,
+          status: 'flagged',
+          progress: 0,
+        },
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        [key]: 'Failed to upload document to server.',
+      }));
+    }
   };
 
-  const handleDeleteFile = (key: string) => {
+  const handleDeleteFile = async (key: string) => {
+    const doc = documents[key];
     setDocuments((prev) => ({
       ...prev,
       [key]: undefined,
     }));
+    if (doc?.dbId) {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+        await fetch(`${apiUrl}/documents/${doc.dbId}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error('Failed to delete document from server:', err);
+      }
+    }
   };
 
   const validateStep = (stepNum: number): boolean => {
@@ -196,31 +261,95 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const handleSaveDraft = () => {
-    const draftPayload = {
-      data: formData,
-      step: currentStep,
-      completed: completedSteps,
-      docs: documents,
-    };
-    localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
-    setSaveDraftMessage('Application draft saved successfully.');
-    setTimeout(() => {
-      setSaveDraftMessage(null);
-    }, 4000);
+  const handleSaveDraft = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+      const response = await fetch(`${apiUrl}/applications/draft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          applicationId: formData.applicationId || undefined,
+          applicationVersionId: formData.applicationVersionId || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save draft to database');
+      }
+
+      const result = await response.json();
+      
+      const updatedFormData = {
+        ...formData,
+        applicationId: result.applicationId,
+        applicationVersionId: result.applicationVersionId,
+      };
+
+      setFormData(updatedFormData);
+
+      const draftPayload = {
+        data: updatedFormData,
+        step: currentStep,
+        completed: completedSteps,
+        docs: documents,
+      };
+      localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
+      setSaveDraftMessage('Application draft saved successfully.');
+      setTimeout(() => {
+        setSaveDraftMessage(null);
+      }, 4000);
+    } catch (e) {
+      console.error('Error saving draft:', e);
+      setSaveDraftMessage('Failed to save draft. Local backup stored.');
+      localStorage.setItem('adp_wizard_draft', JSON.stringify({
+        data: formData,
+        step: currentStep,
+        completed: completedSteps,
+        docs: documents,
+      }));
+      setTimeout(() => {
+        setSaveDraftMessage(null);
+      }, 4000);
+    }
   };
 
-  const handleSaveAndExit = () => {
-    handleSaveDraft();
+  const handleSaveAndExit = async () => {
+    await handleSaveDraft();
     router.push(APPLICANT_ROUTES.dashboard);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateStep(6)) {
-      setReferenceId(`ENT-${Math.floor(100000 + Math.random() * 900000)}`);
-      setIsSubmitted(true);
-      localStorage.removeItem('adp_wizard_draft');
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+        const response = await fetch(`${apiUrl}/applications/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            applicationId: formData.applicationId || undefined,
+            applicationVersionId: formData.applicationVersionId || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit application to database');
+        }
+
+        const result = await response.json();
+        setReferenceId(result.applicationNo);
+        setIsSubmitted(true);
+        localStorage.removeItem('adp_wizard_draft');
+      } catch (error) {
+        console.error('Error submitting application:', error);
+        setErrors({ submit: 'Failed to submit application. Please check your connection and try again.' });
+      }
     }
   };
 

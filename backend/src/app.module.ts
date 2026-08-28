@@ -5,6 +5,7 @@ import { VerificationModule } from './verification/verification.module';
 import { BullModule } from '@nestjs/bullmq';
 import { SupabaseModule } from './supabase/supabase.module';
 import { DocumentModule } from './document/document.module';
+import { ApplicationModule } from './application/application.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OfficerModule } from './officer/officer.module';
 import { AnalyticsModule } from './analytics/analytics.module';
@@ -21,6 +22,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     VerificationModule,
     SupabaseModule,
     DocumentModule,
+    ApplicationModule,
     OfficerModule,
     AnalyticsModule,
   ],

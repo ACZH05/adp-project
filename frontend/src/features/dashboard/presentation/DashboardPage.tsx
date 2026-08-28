@@ -1,20 +1,133 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/src/shared/components/Card";
 import { Button } from "@/src/shared/components/Button";
 import { APPLICANT_ROUTES } from "@/src/features/applicant/data/applicantConstants";
-import { getMockTimeline } from "@/src/features/applicant/data/applicantMockService";
 
 export const DashboardPage: React.FC = () => {
   const router = useRouter();
+  const [latestApplication, setLatestApplication] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const email = localStorage.getItem('adp_user_email') || 'test@example.com';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+
+    fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setLatestApplication(data[0]); // Newest application
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load dashboard application:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const handleStartWizard = () => {
     router.push(APPLICANT_ROUTES.applyStart);
   };
 
-  const timelineEvents = getMockTimeline();
+  const getTimelineEvents = (app: any) => {
+    if (!app) return [];
+    const isSubmitted =
+      app.status === 'submitted' ||
+      app.status === 'verification_queued' ||
+      app.status === 'verifying' ||
+      app.status === 'verified' ||
+      app.status === 'flagged';
+    const isApproved = app.status === 'verified';
+
+    const dateStr = new Date(app.submissionDate).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    return [
+      {
+        label: "Application Draft Created",
+        date: dateStr,
+        desc: "Draft created and saved in the portal database.",
+        done: true,
+        active: !isSubmitted,
+      },
+      {
+        label: "Verification Submitted",
+        date: isSubmitted ? dateStr : "Pending",
+        desc: "Submitted for municipal approval and AI verification queue.",
+        done: isSubmitted,
+        active: isSubmitted && !isApproved,
+      },
+      {
+        label: "AI Document Audit & Match",
+        date: isSubmitted ? dateStr : "Pending",
+        desc: isSubmitted
+          ? "AI engine scans uploaded PDFs and matches forms."
+          : "Audit will run immediately upon application submission.",
+        done: isSubmitted && app.status !== 'submitted' && app.status !== 'verification_queued' && app.status !== 'verifying',
+        active: isSubmitted && (app.status === 'submitted' || app.status === 'verification_queued' || app.status === 'verifying'),
+      },
+      {
+        label: "Final License Review",
+        date: isApproved ? dateStr : "Pending",
+        desc: "Municipal officer final approval and license printing.",
+        done: isApproved,
+        active: isApproved,
+      },
+    ];
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+        <Card className="border border-border-muted p-12 bg-white text-center flex flex-col items-center justify-center gap-2">
+          <span className="text-sm font-semibold text-text-muted">Loading dashboard...</span>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!latestApplication) {
+    return (
+      <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+        <div className="flex items-center justify-between border-b border-border-muted pb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-primary tracking-tight mt-0.5">
+              Application Dashboard
+            </h1>
+          </div>
+        </div>
+        <Card className="border border-border-muted p-12 bg-white text-center flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center text-text-muted">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 17h6" />
+              <path d="M9 13h6" />
+              <path d="M9 9h6" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-text-main">No Active Application</h3>
+            <p className="text-xs text-text-muted mt-1 max-w-sm mx-auto leading-relaxed">
+              Start a new license application to view your AI verification progress and timeline here.
+            </p>
+          </div>
+          <Button onClick={handleStartWizard} className="text-xs mt-2">
+            Apply for New License
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  const timelineEvents = getTimelineEvents(latestApplication);
 
   return (
     <div className="w-full max-w-container-max-width mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
@@ -25,7 +138,7 @@ export const DashboardPage: React.FC = () => {
             Application Dashboard
           </h1>
           <span className="text-xs font-semibold text-text-muted">
-            Food Establishment License - Ref #FE-2024-88A
+            {latestApplication.licenseType} - Ref #{latestApplication.applicationNo || latestApplication.id.substring(0, 8)}
           </span>
         </div>
         <div>
@@ -50,48 +163,86 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         {/* Left Column (Main Dashboard Content) */}
         <div className="md:col-span-8 flex flex-col gap-6">
-          {/* AI Banner */}
-          <div className="bg-amber/5 border border-warning/10 p-5 rounded-lg flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-warning/10 text-warning flex items-center justify-center shrink-0">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-            </div>
-            <div className="w-full">
-              <div className="flex justify-between items-center flex-wrap gap-2">
-                <h3 className="text-sm font-bold text-warning uppercase tracking-wide">
-                  AI Verification in Progress
-                </h3>
-                <span className="text-xs font-bold text-text-muted">
-                  45% Complete
-                </span>
-              </div>
-              <p className="text-sm text-text-muted mt-1">
-                AI scanner has resolved your business info but flagged one
-                low-confidence document. Click resolve below to correct fields and re-upload.
-              </p>
-              <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden mt-3">
-                <div className="bg-warning h-full" style={{ width: "45%" }} />
-              </div>
-              <div className="mt-3 flex justify-end">
-                <Button
-                  onClick={() => router.push('/applicant/applications/APP-2026-002/resubmit')}
-                  className="bg-warning text-white text-xs px-4 py-2 hover:bg-opacity-95"
+          {/* Draft Banner */}
+          {latestApplication.status === 'draft' && (
+            <div className="bg-primary/5 border border-primary/10 p-5 rounded-lg flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
                 >
-                  Resolve Issues
-                </Button>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </div>
+              <div className="w-full">
+                <h3 className="text-sm font-bold text-primary uppercase tracking-wide">
+                  Application Draft Saved
+                </h3>
+                <p className="text-sm text-text-muted mt-1">
+                  You have a saved draft application. Resume the form to upload documents and submit for verification.
+                </p>
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    onClick={() => {
+                      const draftPayload = {
+                        applicationId: latestApplication.id,
+                        applicationVersionId: latestApplication.applicationVersionId,
+                        ...latestApplication.formSnapshot,
+                      };
+                      localStorage.setItem('adp_wizard_draft', JSON.stringify(draftPayload));
+                      router.push(APPLICANT_ROUTES.applyStart);
+                    }}
+                    className="text-xs px-4 py-2"
+                  >
+                    Resume Application
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* AI Banner for submitted applications */}
+          {(latestApplication.status === 'submitted' ||
+            latestApplication.status === 'verification_queued' ||
+            latestApplication.status === 'verifying') && (
+            <div className="bg-amber/5 border border-warning/10 p-5 rounded-lg flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-warning/10 text-warning flex items-center justify-center shrink-0">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+              </div>
+              <div className="w-full">
+                <div className="flex justify-between items-center flex-wrap gap-2">
+                  <h3 className="text-sm font-bold text-warning uppercase tracking-wide">
+                    AI Verification in Progress
+                  </h3>
+                   <span className="text-xs font-bold text-warning animate-pulse">
+                    Scanning...
+                  </span>
+                </div>
+                <p className="text-sm text-text-muted mt-1">
+                  AI scanner is currently analyzing your business license documents and cross-matching fields.
+                </p>
+                <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden mt-3">
+                  <div className="bg-warning h-full animate-pulse" style={{ width: "40%" }} />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -100,11 +251,12 @@ export const DashboardPage: React.FC = () => {
                 Required Documents
               </span>
               <h2 className="text-2xl font-bold text-primary mt-1">
-                3 / 4 Approved
+                {latestApplication.documents.approved} / {latestApplication.documents.total} Uploaded
               </h2>
               <p className="text-xs text-text-muted mt-1.5 leading-normal">
-                Tenancy agreement has been flagged for manual confirmation due
-                to low signature resolution.
+                {latestApplication.status === 'draft'
+                  ? 'Please resume your draft to upload the four required licensing documents.'
+                  : 'AI auditor is matching uploaded documentation snapshots with SSM registration data.'}
               </p>
             </Card>
 
@@ -115,8 +267,8 @@ export const DashboardPage: React.FC = () => {
               <h2 className="text-2xl font-bold text-primary mt-1">
                 RM 250.00
               </h2>
-              <p className="text-xs text-success bg-success/10 px-2 py-0.5 rounded font-semibold inline-block mt-2">
-                Payment Confirmed
+              <p className={`text-xs px-2 py-0.5 rounded font-semibold inline-block mt-2 ${latestApplication.status === 'draft' ? 'text-text-muted bg-surface-container' : 'text-success bg-success/10'}`}>
+                {latestApplication.status === 'draft' ? 'Payment Pending' : 'Payment Confirmed'}
               </p>
             </Card>
           </div>

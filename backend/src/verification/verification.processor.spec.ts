@@ -22,8 +22,8 @@ describe('VerificationConsumer', () => {
       businessName: 'Jane Entertainment',
       position: 'Owner',
       businessPhone: '987654321',
-      regDate: new Date('2026-01-01'),
-      expiryDate: new Date('2027-01-01'),
+      regDate: '2026-01-01',
+      expiryDate: '2027-01-01',
       regNumber: 'REG-1',
       businessAddress: '2 Business Street',
       premiseAddress: '3 Premise Street',
@@ -62,7 +62,7 @@ describe('VerificationConsumer', () => {
         },
       ]),
     } as unknown as SupabaseService;
-    const consumer = new VerificationConsumer(supabaseService);
+    const consumer = new VerificationConsumer(supabaseService, {} as any);
 
     const request = await (
       consumer as unknown as {
@@ -90,7 +90,7 @@ describe('VerificationConsumer', () => {
     const supabaseService = {
       createSignedDocumentUrl: jest.fn().mockResolvedValue([]),
     } as unknown as SupabaseService;
-    const consumer = new VerificationConsumer(supabaseService);
+    const consumer = new VerificationConsumer(supabaseService, {} as any);
 
     await expect(
       (
@@ -146,7 +146,7 @@ describe('VerificationConsumer', () => {
     });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const consumer = new VerificationConsumer(supabaseService);
+    const consumer = new VerificationConsumer(supabaseService, {} as any);
     const result = await consumer.process({
       name: 'verify-application',
       data: payload,
@@ -194,7 +194,7 @@ describe('VerificationConsumer', () => {
     });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const consumer = new VerificationConsumer(supabaseService);
+    const consumer = new VerificationConsumer(supabaseService, {} as any);
 
     await expect(
       consumer.process({ name: 'verify-application', data: payload } as never),

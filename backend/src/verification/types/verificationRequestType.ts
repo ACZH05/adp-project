@@ -43,8 +43,8 @@ type FormData = {
   businessName: string;
   position: string;
   businessPhone: string;
-  regDate: Date;
-  expiryDate: Date;
+  regDate: string;
+  expiryDate: string;
   regNumber: string;
   businessAddress: string;
   premiseAddress: string;
