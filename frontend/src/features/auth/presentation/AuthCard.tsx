@@ -18,8 +18,10 @@ export const AuthCard: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -47,16 +49,33 @@ export const AuthCard: React.FC = () => {
       }
       
       setErrors({});
-      const signUpPayload = {
-        firstName,
-        lastName,
-        phoneNumber,
-        email,
-        password
-      };
-
-      // Logic for auth would go here
-      console.log('Register payload:', signUpPayload);
+      setIsLoading(true);
+      setApiError('');
+      
+      try {
+        const response = await fetch('http://localhost:8081/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            fullName: `${firstName} ${lastName}`.trim(),
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Registration failed');
+        }
+        
+        // Auto-login after registration or just switch to login tab
+        setActiveTab('login');
+        setApiError('Registration successful. Please sign in.');
+      } catch (err: any) {
+        setApiError(err.message || 'An error occurred during registration.');
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       if (!email.includes('@')) {
         newErrors.email = 'Please enter a valid email address format.';
@@ -64,12 +83,34 @@ export const AuthCard: React.FC = () => {
         return;
       }
       setErrors({});
+      setIsLoading(true);
+      setApiError('');
       
-      // Simulating login redirection based on user role/email
-      if (email.toLowerCase().includes('officer')) {
-        router.push('/officer/queue');
-      } else {
-        router.push('/dashboard');
+      try {
+        const response = await fetch('http://localhost:8081/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const data = await response.json();
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        if (data.user?.role === 'officer' || data.user?.role === 'admin') {
+          router.push('/officer/queue');
+        } else {
+          router.push('/dashboard');
+        }
+      } catch (err: any) {
+        setApiError(err.message || 'Invalid email or password.');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -266,12 +307,20 @@ export const AuthCard: React.FC = () => {
             </div>
           )}
 
-          <Button type="submit" className="w-full py-3 mt-2 flex gap-2">
-            {activeTab === 'login' ? 'Sign In' : 'Register'}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-              <polyline points="12 5 19 12 12 19"/>
-            </svg>
+          {apiError && (
+            <div className={`text-sm p-3 rounded-md ${apiError.includes('successful') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {apiError}
+            </div>
+          )}
+
+          <Button type="submit" disabled={isLoading} className="w-full py-3 mt-2 flex gap-2">
+            {isLoading ? 'Processing...' : (activeTab === 'login' ? 'Sign In' : 'Register')}
+            {!isLoading && (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            )}
           </Button>
         </form>
 
