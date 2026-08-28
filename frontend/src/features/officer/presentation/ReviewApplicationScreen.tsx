@@ -43,7 +43,7 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
           else if (backendApp.status === 'rejected') status = 'Rejected';
 
           const report = backendApp.currentApplicationVersion?.verificationJobs?.[0]?.verificationReport;
-          const score = report?.confidenceScore != null ? Math.round(report.confidenceScore * 100) : 85;
+          const score = report?.confidenceScore != null ? Math.round(report.confidenceScore > 1 ? report.confidenceScore : report.confidenceScore * 100) : 85;
 
           const generalApp = {
             id: backendApp.id,
@@ -56,34 +56,64 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
           };
 
           const detail = getApplicationDetails(generalApp);
+          (detail as any).versionNumber = backendApp.currentVersionNumber || 1;
 
-          // Map database officer decision history into audit logs (1 decision per application)
-          const dbAuditLogs: AuditLogEntry[] = (backendApp.officerDecisions || []).slice(0, 1).map((d: any) => {
-            let actionName = 'Officer Decision';
-            if (d.decisionType === 'approved') actionName = 'Application Approved';
-            else if (d.decisionType === 'rejected') actionName = 'Application Rejected';
-            else if (d.decisionType === 'correction_required') actionName = 'Correction Requested';
+          // Map database audit logs and officer decision history into complete audit trail
+          const dbAuditLogs: AuditLogEntry[] = [];
 
-            let notesCombined = d.officerNote || '';
-            if (d.reason) {
-              notesCombined = notesCombined ? `${notesCombined}\nReason: ${d.reason}` : `Reason: ${d.reason}`;
-            }
+          if (Array.isArray(backendApp.auditLogs) && backendApp.auditLogs.length > 0) {
+            backendApp.auditLogs.forEach((log: any) => {
+              if (log.action === 'officer_decision' && log.metadata) {
+                const meta = log.metadata;
+                let actionName = 'Officer Decision';
+                if (meta.decisionType === 'approved') actionName = 'Application Approved';
+                else if (meta.decisionType === 'rejected') actionName = 'Application Rejected';
+                else if (meta.decisionType === 'correction_required') actionName = 'Correction Requested';
 
-            return {
-              id: d.id,
-              action: actionName,
-              user: d.officerUser?.fullName ? `Officer (${d.officerUser.fullName})` : 'Officer (Senior Reviewer)',
-              timestamp: d.decidedAt ? new Date(d.decidedAt).toISOString().replace('T', ' ').slice(0, 19) : new Date().toISOString().replace('T', ' ').slice(0, 19),
-              notes: notesCombined || undefined,
-            };
-          });
+                let notesCombined = meta.officerNote || '';
+                if (meta.reason) {
+                  notesCombined = notesCombined ? `${notesCombined}\nReason: ${meta.reason}` : `Reason: ${meta.reason}`;
+                }
 
-          // Keep non-officer timeline logs (submission & AI checks), replacing previous decision logs
-          const nonOfficerLogs = detail.auditLogs.filter(
+                dbAuditLogs.push({
+                  id: log.id,
+                  action: actionName,
+                  user: log.actor?.fullName ? `Officer (${log.actor.fullName})` : 'Officer (Senior Reviewer)',
+                  timestamp: log.createdAt ? new Date(log.createdAt).toISOString().replace('T', ' ').slice(0, 19) : new Date().toISOString().replace('T', ' ').slice(0, 19),
+                  notes: notesCombined || undefined,
+                });
+              }
+            });
+          } else if (Array.isArray(backendApp.officerDecisions)) {
+            backendApp.officerDecisions.forEach((d: any) => {
+              let actionName = 'Officer Decision';
+              if (d.decisionType === 'approved') actionName = 'Application Approved';
+              else if (d.decisionType === 'rejected') actionName = 'Application Rejected';
+              else if (d.decisionType === 'correction_required') actionName = 'Correction Requested';
+
+              let notesCombined = d.officerNote || '';
+              if (d.reason) {
+                notesCombined = notesCombined ? `${notesCombined}\nReason: ${d.reason}` : `Reason: ${d.reason}`;
+              }
+
+              dbAuditLogs.push({
+                id: d.id,
+                action: actionName,
+                user: d.officerUser?.fullName ? `Officer (${d.officerUser.fullName})` : 'Officer (Senior Reviewer)',
+                timestamp: d.decidedAt ? new Date(d.decidedAt).toISOString().replace('T', ' ').slice(0, 19) : new Date().toISOString().replace('T', ' ').slice(0, 19),
+                notes: notesCombined || undefined,
+              });
+            });
+          }
+
+          // Keep initial submission & AI check logs, combining with all decision logs
+          const baseLogs = detail.auditLogs.filter(
             l => !l.action.includes('Approved') && !l.action.includes('Rejected') && !l.action.includes('Correction') && !l.action.includes('Officer Decision')
           );
 
-          detail.auditLogs = [...nonOfficerLogs, ...dbAuditLogs];
+          const allLogs = [...baseLogs, ...dbAuditLogs];
+          allLogs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          detail.auditLogs = allLogs;
 
           setAppDetail(detail);
           setIsLoading(false);
@@ -166,16 +196,14 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
       notes: logNotes,
     };
 
-    // Keep non-officer timeline logs, replacing previous decision log with the updated decision
-    const nonOfficerLogs = appDetail.auditLogs.filter(
-      l => !l.action.includes('Approved') && !l.action.includes('Rejected') && !l.action.includes('Correction') && !l.action.includes('Officer Decision')
-    );
+    // Update local state by sorting all logs chronologically (oldest on top, newest on bottom)
+    const combinedLogs = [...appDetail.auditLogs, newLog];
+    combinedLogs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    // Update local state
     const updatedDetails: ApplicationDetail = {
       ...appDetail,
       status: newStatus,
-      auditLogs: [...nonOfficerLogs, newLog]
+      auditLogs: combinedLogs,
     };
 
     // Reflect status updates in the global mock database for this session
@@ -237,9 +265,16 @@ export const ReviewApplicationScreen: React.FC<ReviewApplicationScreenProps> = (
                   <polyline points="12 19 5 12 12 5" />
                 </svg>
               </Link>
-              <h1 className="text-xl md:text-2xl font-bold text-primary tracking-tight">
-                Review Application
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-bold text-primary tracking-tight">
+                  Review Application
+                </h1>
+                {appDetail && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                    v{(appDetail as any).versionNumber || 1}
+                  </span>
+                )}
+              </div>
             </div>
             <span className="text-xs font-semibold text-text-muted">
               Processing Mode: <span className="font-bold text-info">Manual Audit</span>

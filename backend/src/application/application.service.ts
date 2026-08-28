@@ -150,32 +150,57 @@ export class ApplicationService {
       submittedAt: status === 'submitted' ? new Date() : null,
     };
 
-    if (applicationVersionId) {
-      version = await this.prisma.applicationVersion.findUnique({
-        where: { id: applicationVersionId },
-      });
-      if (!version) {
-        throw new NotFoundException(`ApplicationVersion with ID "${applicationVersionId}" not found`);
-      }
+    const latestVersion = await this.prisma.applicationVersion.findFirst({
+      where: { applicationId: applicationId! },
+      orderBy: { versionNumber: 'desc' },
+      include: { documents: true },
+    });
+
+    if (
+      applicationVersionId &&
+      latestVersion &&
+      latestVersion.id === applicationVersionId &&
+      latestVersion.versionStatus === ApplicationVersionStatus.draft
+    ) {
       version = await this.prisma.applicationVersion.update({
         where: { id: applicationVersionId },
         data: versionData,
       });
     } else {
-      // Find the next version number
-      const latestVersion = await this.prisma.applicationVersion.findFirst({
-        where: { applicationId: applicationId! },
-        orderBy: { versionNumber: 'desc' },
-      });
       const nextVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
-
       version = await this.prisma.applicationVersion.create({
         data: {
           ...versionData,
           versionNumber: nextVersionNumber,
+          previousVersionId: latestVersion?.id || null,
         },
       });
       applicationVersionId = version.id;
+
+      // Copy documents from previous version if any exist and haven't been re-uploaded
+      if (latestVersion && latestVersion.documents.length > 0) {
+        for (const doc of latestVersion.documents) {
+          const existingInNewVersion = await this.prisma.applicationDocument.findFirst({
+            where: {
+              applicationVersionId: version.id,
+              documentType: doc.documentType,
+            },
+          });
+          if (!existingInNewVersion) {
+            await this.prisma.applicationDocument.create({
+              data: {
+                applicationVersionId: version.id,
+                documentType: doc.documentType,
+                fileName: doc.fileName,
+                fileSize: doc.fileSize,
+                fileType: doc.fileType,
+                storagePath: doc.storagePath,
+                uploadStatus: doc.uploadStatus,
+              },
+            });
+          }
+        }
+      }
     }
 
     // Update Application's current version links

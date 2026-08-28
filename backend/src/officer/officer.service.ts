@@ -153,6 +153,18 @@ export class OfficerService {
             },
           },
         },
+        auditLogs: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            actor: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+              },
+            },
+          },
+        },
         versions: {
           orderBy: { versionNumber: 'desc' },
           include: {
@@ -348,6 +360,8 @@ export class OfficerService {
             decisionType: dto.decisionType,
             newStatus,
             reasonCode: dto.reasonCode,
+            reason: dto.reason,
+            officerNote: dto.officerNote,
           },
         },
       });

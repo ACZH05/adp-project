@@ -27,7 +27,10 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
 
   const handleApprove = () => {
     if (confirm("Are you sure you want to APPROVE this application? This will finalize the case.")) {
-      onDecision('Processed', 'Application Approved', notes || 'Approved after audit review.');
+      const approveNote = notes && !notes.toLowerCase().includes('correction requested')
+        ? notes
+        : 'All requirements and resubmitted documents verified. Application approved after audit review.';
+      onDecision('Processed', 'Application Approved', approveNote);
     }
   };
 

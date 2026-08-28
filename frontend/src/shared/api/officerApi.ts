@@ -5,7 +5,7 @@ export interface OfficerDecisionPayload {
   reasonCode?: string;
   reason?: string;
   officerNote?: string;
-  officerUserId: string;
+  officerUserId?: string;
 }
 
 /**
