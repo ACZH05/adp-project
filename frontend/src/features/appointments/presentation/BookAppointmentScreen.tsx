@@ -24,10 +24,42 @@ export const BookAppointmentScreen: React.FC = () => {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date(2026, 5, 23));
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [notes, setNotes] = useState('');
 
-  const handleConfirm = () => {
-    // Navigate back to dashboard with success (mock behavior)
-    router.push('/applicant/dashboard');
+  const handleConfirm = async () => {
+    if (!selectedDate || !selectedSlotId) return;
+    
+    setIsLoading(true);
+    try {
+      const time = MOCK_SLOTS.find(s => s.id === selectedSlotId)?.time || '';
+      
+      const response = await fetch('http://localhost:8082/appointments', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer mock-applicant-token'
+        },
+        body: JSON.stringify({
+          applicantId: 'mock-applicant-123', // In a real app, get from auth context
+          applicationId: 'APP-2024-8992', // Mocked ID to match the UI
+          requestedDate: selectedDate.toISOString(),
+          requestedTime: time,
+          notes: notes
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to book appointment');
+      }
+
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      alert('Failed to book appointment. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -79,6 +111,8 @@ export const BookAppointmentScreen: React.FC = () => {
                   rows={4}
                   className="w-full p-3 border border-border-muted rounded-default text-sm placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-y"
                   placeholder="e.g., Use the rear entrance in the alleyway. Ring the bell labeled 'Kitchen'."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
             </Card>
@@ -121,10 +155,10 @@ export const BookAppointmentScreen: React.FC = () => {
               <Button 
                 className="w-full justify-center h-12 text-base shadow-sm" 
                 variant="deep-navy"
-                disabled={!selectedDate || !selectedSlotId}
+                disabled={!selectedDate || !selectedSlotId || isLoading}
                 onClick={handleConfirm}
               >
-                Confirm Appointment
+                {isLoading ? 'Confirming...' : 'Confirm Appointment'}
               </Button>
             </div>
           </div>

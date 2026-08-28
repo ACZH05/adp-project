@@ -9,14 +9,58 @@ import { useToast } from '@/src/shared/hooks/useToast';
 import { ToastNotification } from '@/src/shared/components/ToastNotification';
 
 export const AppointmentDashboardScreen: React.FC = () => {
-  const [appointments, setAppointments] = useState<OfficerAppointment[]>(mockOfficerAppointments);
+  const [appointments, setAppointments] = useState<OfficerAppointment[]>([]);
   const { toast, showToast } = useToast();
 
-  const handleApprove = (id: string) => {
-    setAppointments(prev => prev.map(app => 
-      app.id === id ? { ...app, status: 'Approved' } : app
-    ));
-    showToast(`Appointment ${id} approved successfully. Applicant notified.`, 'success');
+  React.useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await fetch('http://localhost:8082/admin/appointments', {
+          headers: {
+            'Authorization': 'Bearer mock-admin-token'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped = data.map((app: any) => ({
+            id: app.id,
+            applicantName: app.applicantId,
+            applicationId: app.applicationId,
+            date: app.requestedDate.split('T')[0],
+            time: app.requestedTime,
+            type: 'Inspection',
+            status: app.status === 'PENDING' ? 'Pending' : app.status === 'APPROVED' ? 'Approved' : app.status
+          }));
+          setAppointments(mapped);
+        }
+      } catch (e) {
+        console.error('Failed to fetch appointments', e);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:8082/admin/appointments/${id}/decision`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer mock-admin-token'
+        },
+        body: JSON.stringify({ decision: 'APPROVED', adminId: 'admin-1', reason: 'Approved via portal' })
+      });
+      if (res.ok) {
+        setAppointments(prev => prev.map(app => 
+          app.id === id ? { ...app, status: 'Approved' } : app
+        ));
+        showToast(`Appointment approved successfully. Applicant notified.`, 'success');
+      } else {
+        showToast(`Failed to approve appointment.`, 'error');
+      }
+    } catch (e) {
+      showToast(`Error approving appointment.`, 'error');
+    }
   };
 
   const handleReschedule = (id: string) => {

@@ -1,8 +1,51 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model AppointmentRequest {
+  id             String    @id @default(uuid())
+  applicantId    String
+  applicationId  String
+  requestedDate  DateTime
+  requestedTime  String
+  status         String    // PENDING, APPROVED, REJECTED, UNAVAILABLE
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  correlationId  String?
+
+  decisions      AppointmentDecision[]
+}
+
+model AppointmentDecision {
+  id                   String    @id @default(uuid())
+  appointmentRequestId String
+  decision             String    // APPROVED, REJECTED, UNAVAILABLE
+  adminId              String?
+  reason               String?
+  decidedTimestamp     DateTime  @default(now())
+  correlationId        String?
+
+  appointmentRequest   AppointmentRequest @relation(fields: [appointmentRequestId], references: [id])
+}
+
+model AppointmentAudit {
+  id                   String   @id @default(uuid())
+  appointmentRequestId String
+  action               String   // CREATED, DECISION_UPDATED, STATUS_TRANSITION, NOTIFICATION_DISPATCHED
+  performedBy          String?  // applicantId or adminId or 'system'
+  details              String?  // JSON string or text details
+  timestamp            DateTime @default(now())
+  correlationId        String?
+}
+
+model EligibleApplication {
+  applicationId String   @id
+  applicantId   String
+  isEligible    Boolean  @default(true)
+  approvedAt    DateTime @default(now())
 }
