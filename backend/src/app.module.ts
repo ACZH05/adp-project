@@ -11,6 +11,8 @@ import { OfficerModule } from './officer/officer.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AuthModule } from './auth/auth.module';
 import { AuditModule } from './audit/audit.module';
+import { AppointmentModule } from './appointment/appointment.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { AuditModule } from './audit/audit.module';
     PrismaModule,
     AuditModule,
     AuthModule,
+    AppointmentModule,
+    ScheduleModule.forRoot(),
     VerificationModule,
     SupabaseModule,
     DocumentModule,

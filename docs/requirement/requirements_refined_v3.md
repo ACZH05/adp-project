@@ -12,7 +12,7 @@
 
 ## Source Alignment
 
-The current district office process requires in-person visits for information lookup, document submission, and status checking. Manual document completeness checks create counter congestion, repeated applicant visits, and long processing time. Unscheduled physical visits also create avoidable counter traffic because approved applicants do not have a structured appointment channel for follow-up submission or visit coordination.
+The current district office process requires in-person visits for information lookup, document submission, and status checking. Manual document completeness checks create counter congestion, repeated applicant visits, and long processing time. Unscheduled physical visits also create avoidable counter traffic because approved applicants do not have a structured appointment channel to collect their approved license.
 
 Project objectives used for alignment:
 
@@ -294,7 +294,7 @@ Each requirement uses the following format:
   Requirement: The system shall expose appointment eligibility only for applications that have reached the approved status in S4.
   Objective Link: `O3`
 - `S5-FR-02` | Type: `FR` | Module: `S5-M1`
-  Requirement: The system shall allow an eligible applicant to request a preferred appointment date and time for physical visit coordination after application approval.
+  Requirement: The system shall allow an eligible applicant to request a preferred appointment date and time to collect their approved license after application approval.
   Objective Link: `O3`
 - `S5-FR-03` | Type: `FR` | Module: `S5-M1`
   Requirement: The system shall allow applicants to view the current appointment request status (pending, approved, rejected, unavailable) for each approved application.
@@ -333,7 +333,7 @@ Each requirement uses the following format:
   Requirement: Appointment status updates and appointment notification events shall be idempotent to avoid duplicate status transitions and duplicate emails.
   Objective Link: `O3`
 - `S5-NFR-02` | Type: `NFR` | Module: `S5-M3`
-  Requirement: Appointment scheduling scope shall be limited to physical visit coordination and shall not require full calendar resource management.
+  Requirement: Appointment scheduling scope shall be limited to license collection coordination and shall not require full calendar resource management.
   Objective Link: `O3`
 
 ---
@@ -475,5 +475,5 @@ Each requirement uses the following format:
   Primary Requirement Coverage: `S2-FR-03`, `S2-FR-04`, `S2-FR-06`, `S2-FR-09`, `S3-FR-02`, `S3-FR-04`, `S3-FR-11`, `S4-FR-07`, `S4-FR-08`, `S4-FR-09`, `INT-05`, `INT-13`
 
 - **O3: Reduce processing time within 6 months**
-  Measurable Target: Cycle-time trend (including queue wait time and appointment coordination after approval) decreases from baseline within 6 months after implementation.
+  Measurable Target: Cycle-time trend (including queue wait time and license collection appointment coordination after approval) decreases from baseline within 6 months after implementation.
   Primary Requirement Coverage: `S1-FR-06`, `S1-FR-07`, `S1-FR-08`, `S2-FR-04a`, `S2-FR-10`, `S2-FR-12`, `S3-FR-06`, `S3-FR-07`, `S3-FR-08`, `S3-FR-09`, `S3-FR-10`, `S3-FR-11`, `S3-FR-12`, `S3-NFR-01`, `S3-NFR-05`, `S4-FR-01`, `S4-FR-02`, `S4-FR-08`, `S4-FR-11`, `S4-FR-12`, `S4-NFR-03`, `S5-FR-01`, `S5-FR-02`, `S5-FR-03`, `S5-FR-04`, `S5-FR-05`, `S5-FR-06`, `S5-FR-07`, `S5-FR-08`, `S5-FR-09`, `S5-FR-10`, `S5-FR-11`, `S5-NFR-01`, `S5-NFR-02`, `INT-04`, `INT-05`, `INT-06`, `INT-07`, `INT-08`, `INT-09`, `INT-10`, `INT-11`, `INT-12`, `INT-13`, `INT-14`, `INT-15`, `INT-16`, `INT-17`, `INT-18`

@@ -6,7 +6,9 @@ enum AuditAction {
   upload_document
   run_verification
   officer_decision
+  appointment_requested
   appointment_decision
+  appointment_expired
   notification_sent
 
   @@map("audit_action")

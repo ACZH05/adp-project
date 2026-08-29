@@ -1,27 +1,64 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FullCalendar } from './components/FullCalendar';
 import { AppointmentTable } from './components/AppointmentTable';
-import { mockOfficerAppointments, OfficerAppointment } from '../data/mockAppointments';
+import { OfficerAppointment } from '../data/mockAppointments';
 import { useToast } from '@/src/shared/hooks/useToast';
 import { ToastNotification } from '@/src/shared/components/ToastNotification';
+import { appointmentApi } from '../../appointments/data/appointmentApi';
 
 export const AppointmentDashboardScreen: React.FC = () => {
-  const [appointments, setAppointments] = useState<OfficerAppointment[]>(mockOfficerAppointments);
+  const [appointments, setAppointments] = useState<OfficerAppointment[]>([]);
   const { toast, showToast } = useToast();
+  const [loading, setLoading] = useState(true);
 
-  const handleApprove = (id: string) => {
-    setAppointments(prev => prev.map(app => 
-      app.id === id ? { ...app, status: 'Approved' } : app
-    ));
-    showToast(`Appointment ${id} approved successfully. Applicant notified.`, 'success');
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      const data = await appointmentApi.getPendingRequests();
+      const formatted: OfficerAppointment[] = data.map((appt: any) => ({
+        id: appt.id,
+        applicantName: `${appt.applicant.firstName} ${appt.applicant.lastName}`,
+        applicationId: appt.application.applicationNo || appt.application.id,
+        date: new Date(appt.preferredStartAt).toISOString().split('T')[0],
+        time: new Date(appt.preferredStartAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        type: 'License Collection',
+        status: appt.status.charAt(0).toUpperCase() + appt.status.slice(1),
+      }));
+      setAppointments(formatted);
+    } catch (err: any) {
+      showToast(err.message, 'info');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReschedule = (id: string) => {
-    // In a real app, this would open a modal to select a new date/time
-    showToast(`Initiated reschedule flow for ${id}.`, 'info');
+  const handleApprove = async (id: string) => {
+    try {
+      await appointmentApi.decideAppointment(id, 'approve');
+      showToast(`Appointment ${id} approved successfully. Applicant notified.`, 'success');
+      fetchAppointments();
+    } catch (err: any) {
+      showToast(err.message, 'info');
+    }
   };
+
+  const handleReschedule = async (id: string) => {
+    // We treat "Reschedule" as Reject in this MVP unless specific reschedule endpoint exists.
+    try {
+      await appointmentApi.decideAppointment(id, 'reject', 'Please choose another time slot.');
+      showToast(`Appointment ${id} rejected. Applicant asked to reschedule.`, 'info');
+      fetchAppointments();
+    } catch (err: any) {
+      showToast(err.message, 'info');
+    }
+  };
+
+  if (loading) return <div className="p-8">Loading...</div>;
 
   return (
     <>
