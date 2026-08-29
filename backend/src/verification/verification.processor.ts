@@ -10,6 +10,8 @@ import {
   ApplicationStatus,
 } from '../../generated/prisma/client';
 
+import { NotificationService } from '../notification/notification.service';
+
 type SignedDocumentUrl = {
   path?: string | null;
   signedUrl?: string | null;
@@ -21,6 +23,7 @@ export class VerificationConsumer extends WorkerHost {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
   ) {
     super();
   }
@@ -137,7 +140,28 @@ export class VerificationConsumer extends WorkerHost {
           status: appStatus,
         },
       });
-    });
+    }, { maxWait: 10000, timeout: 20000 });
+
+    // 3. Dispatch Email Notification (S2-FR-11)
+    try {
+      const app = await this.prisma.application.findUnique({
+        where: { id: applicationId },
+        include: { applicant: true },
+      });
+
+      if (app && app.applicant?.email && this.notificationService) {
+        await this.notificationService.sendApplicationStatusNotification({
+          recipientEmail: app.applicant.email,
+          applicantName: app.applicantFullName,
+          applicationNo: app.applicationNo,
+          status: appStatus,
+          summary: result.report.summary,
+          issuesCount: result.issues?.length ?? 0,
+        });
+      }
+    } catch (notifErr) {
+      console.error('Failed to dispatch status email notification:', notifErr);
+    }
   }
 
   private async saveVerificationFailure(

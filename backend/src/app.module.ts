@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { VerificationModule } from './verification/verification.module';
 import { BullModule } from '@nestjs/bullmq';
+import { VerificationModule } from './verification/verification.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { DocumentModule } from './document/document.module';
 import { ApplicationModule } from './application/application.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ApplicationModule } from './application/application.module';
     SupabaseModule,
     DocumentModule,
     ApplicationModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

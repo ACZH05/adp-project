@@ -7,8 +7,6 @@ import { Card } from '@/src/shared/components/Card';
 import { StatusBadge } from '@/src/shared/components/StatusBadge';
 import { useToast } from '@/src/shared/hooks/useToast';
 import { ToastNotification } from '@/src/shared/components/ToastNotification';
-import { mockApplicantApplications } from '../data/mockApplications';
-import { updateMockApplicationDetails, getApplicationDetails } from '../../officer/data/mockApplicationDetails';
 
 interface ResubmissionScreenProps {
   id: string;
@@ -26,7 +24,6 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
   // Form States
   const [businessName, setBusinessName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
-  const [isRealDbApp, setIsRealDbApp] = useState(false);
 
   // File Upload states (names/size of the uploaded files)
   const [ssmFile, setSsmFile] = useState<{ name: string; size: string } | null>(null);
@@ -42,19 +39,7 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // 1. First check if it is in mock data
-    const mockApp = mockApplicantApplications.find(a => a.id === id);
-    if (mockApp) {
-      setBaseApp(mockApp);
-      const details = getApplicationDetails(mockApp as any);
-      setAppDetails(details);
-      setBusinessName(details?.businessName || '');
-      setExpiryDate(details?.businessExpiryDate || '');
-      setLoading(false);
-      return;
-    }
-
-    // 2. Fetch from real database
+    // Fetch from real database API
     const email = localStorage.getItem('adp_user_email') || 'test@example.com';
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 
@@ -64,7 +49,6 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
         if (Array.isArray(data)) {
           const app = data.find(a => a.applicationNo === id || a.id === id);
           if (app) {
-            setIsRealDbApp(true);
             setBaseApp({
               ...app,
               status: app.status === 'correction_required' ? 'Flagged' : app.status,
@@ -123,7 +107,7 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
       setSsmVerifying(true);
       setSsmVerified(false);
 
-      if (isRealDbApp && baseApp?.applicationVersionId) {
+      if (baseApp?.applicationVersionId) {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
           const formDataUpload = new FormData();
@@ -147,11 +131,9 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
           showToast('Failed to upload SSM document.', 'info');
         }
       } else {
-        setTimeout(() => {
-          setSsmVerifying(false);
-          setSsmVerified(true);
-          showToast('SSM Document verified by AI. Status: Active (98% confidence).', 'success');
-        }, 1000);
+        setSsmVerifying(false);
+        setSsmVerified(true);
+        showToast('SSM Document uploaded successfully.', 'success');
       }
     }
   };
@@ -164,7 +146,7 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
       setTenancyVerifying(true);
       setTenancyVerified(false);
 
-      if (isRealDbApp && baseApp?.applicationVersionId) {
+      if (baseApp?.applicationVersionId) {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
           const formDataUpload = new FormData();
@@ -188,11 +170,9 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
           showToast('Failed to upload Tenancy Agreement.', 'info');
         }
       } else {
-        setTimeout(() => {
-          setTenancyVerifying(false);
-          setTenancyVerified(true);
-          showToast('Tenancy Agreement verified by AI. Tenant name aligns (96% confidence).', 'success');
-        }, 1000);
+        setTenancyVerifying(false);
+        setTenancyVerified(true);
+        showToast('Tenancy Agreement uploaded successfully.', 'success');
       }
     }
   };
@@ -203,16 +183,19 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
 
     setIsSubmitting(true);
 
-    if (isRealDbApp && baseApp) {
+    if (baseApp) {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
         
         // Construct the full SubmitApplicationDto using formSnapshot from the loaded realApp
+        const userEmail = localStorage.getItem('adp_user_email') || '';
         const payload = {
           ...baseApp.formSnapshot,
+          email: baseApp.formSnapshot?.email || userEmail,
           businessName: businessName,
           expiryDate: expiryDate,
-          id: baseApp.dbId,
+          applicationId: baseApp.id,
+          applicationVersionId: baseApp.applicationVersionId,
         };
 
         const res = await fetch(`${apiUrl}/applications/submit`, {
@@ -234,71 +217,6 @@ export const ResubmissionScreen: React.FC<ResubmissionScreenProps> = ({ id }) =>
         setIsSubmitting(false);
         showToast('Failed to submit corrections. Please try again.', 'info');
       }
-    } else {
-      setTimeout(() => {
-        // 1. Update general application status and confidence in the mock array
-        if (baseApp) {
-          const appIndex = mockApplicantApplications.findIndex(a => a.id === id);
-          baseApp.status = 'AI-Ready';
-          baseApp.aiConfidence = 96;
-          baseApp.documents = { total: 4, approved: 4, flagged: 0 };
-          if (appIndex !== -1) {
-            mockApplicantApplications[appIndex] = { ...baseApp };
-          }
-        }
-
-        // 2. Update detailed info (SSM details, document list, findings list) in memory
-        const updatedDocs = appDetails ? appDetails.documents.map((doc: any) => {
-          if (doc.id === 'DOC-005') {
-            return {
-              ...doc,
-              status: 'Verified' as const,
-              aiConfidence: 98,
-              fileName: ssmFile?.name || 'ssm_kee_food_ventures_updated.pdf',
-              fileSize: ssmFile?.size || '1.8 MB',
-              uploadedDate: new Date().toISOString().split('T')[0],
-            };
-          }
-          if (doc.id === 'DOC-006') {
-            return {
-              ...doc,
-              status: 'Verified' as const,
-              aiConfidence: 96,
-              fileName: tenancyFile?.name || 'tenancy_agreement_updated.pdf',
-              fileSize: tenancyFile?.size || '3.5 MB',
-              uploadedDate: new Date().toISOString().split('T')[0],
-            };
-          }
-          return doc;
-        }) : [];
-
-        updateMockApplicationDetails(id, {
-          status: 'AI-Ready',
-          aiConfidence: 96,
-          businessName,
-          businessExpiryDate: expiryDate,
-          documents: updatedDocs,
-          aiFindings: [], // Clear out discrepancies since they are resolved
-          auditLogs: [
-            {
-              id: `LOG-RESUBMIT-${Date.now()}`,
-              action: 'Corrections Resubmitted',
-              user: 'Applicant (Tan Kah Kee)',
-              timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-              notes: 'Business name aligned, expiry date extended, SSM & Tenancy documents replaced. Auto-validation: Passed (96% overall match).',
-            },
-            ...(appDetails?.auditLogs || []),
-          ],
-        });
-
-        setIsSubmitting(false);
-        showToast('Corrections submitted successfully. Re-verification passed!', 'success');
-
-        // Redirect back to dashboard
-        setTimeout(() => {
-          router.push('/applicant/dashboard');
-        }, 1500);
-      }, 1200);
     }
   };
 

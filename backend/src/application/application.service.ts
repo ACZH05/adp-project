@@ -13,11 +13,14 @@ import {
 } from '../../generated/prisma/client';
 import { randomUUID } from 'crypto';
 
+import { NotificationService } from '../notification/notification.service';
+
 @Injectable()
 export class ApplicationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly verificationService: VerificationService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   private mapPremiseType(type: string): PremiseType {
@@ -189,6 +192,30 @@ export class ApplicationService {
 
     // 4. If submitted, trigger AI verification enqueuing
     if (status === 'submitted') {
+      // Idempotency guard check (S2-FR-04b, S3-FR-12): Do not enqueue duplicate verification job for active/queued application version
+      const activeJob = await this.prisma.verificationJob.findFirst({
+        where: {
+          OR: [
+            { applicationVersionId: applicationVersionId! },
+            { applicationVersion: { applicationId: applicationId! } },
+          ],
+          jobStatus: {
+            in: [VerificationJobStatus.queued, VerificationJobStatus.processing],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (activeJob) {
+        return {
+          applicationId,
+          applicationVersionId,
+          applicationNo: appNo,
+          status: 'submitted',
+          message: 'Verification job is already active/queued for this application version.',
+        };
+      }
+
       // Fetch uploaded documents for this version
       const dbDocs = await this.prisma.applicationDocument.findMany({
         where: {
@@ -258,6 +285,24 @@ export class ApplicationService {
           jobStatus: VerificationJobStatus.queued,
         },
       });
+
+      // Dispatch submission/resubmission email notification (S2-FR-11)
+      try {
+        const isResubmission = version.versionNumber > 1;
+        const eventStatus = isResubmission ? 'resubmitted' : 'submitted';
+
+        await this.notificationService.sendApplicationStatusNotification({
+          recipientEmail: dto.email,
+          applicantName: dto.fullName,
+          applicationNo: appNo,
+          status: eventStatus,
+          summary: isResubmission
+            ? 'Corrections resubmitted successfully. Automated AI re-verification has been enqueued.'
+            : 'Application submitted successfully. Automated AI pre-screening has been enqueued.',
+        });
+      } catch (notifErr) {
+        console.error('Failed to send submission email notification:', notifErr);
+      }
     }
 
     return {

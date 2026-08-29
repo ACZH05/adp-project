@@ -7,6 +7,8 @@ import { Card } from '@/src/shared/components/Card';
 import { StatusBadge } from '@/src/shared/components/StatusBadge';
 import { APPLICANT_ROUTES, APPLICATION_STATUS_FILTERS } from '../data/applicantConstants';
 
+import { useApplicationRealtime } from '@/src/shared/hooks/useApplicationRealtime';
+
 export const ApplicationsScreen: React.FC = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -17,9 +19,14 @@ export const ApplicationsScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expandedAppId, setExpandedAppId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const email = localStorage.getItem('adp_user_email') || 'test@example.com';
+  const fetchApplications = React.useCallback(() => {
+    const email = typeof window !== 'undefined' ? localStorage.getItem('adp_user_email') || '' : '';
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+
+    if (!email) {
+      setLoading(false);
+      return;
+    }
 
     fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`)
       .then(res => res.json())
@@ -65,6 +72,16 @@ export const ApplicationsScreen: React.FC = () => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]);
+
+  const userEmail = typeof window !== 'undefined' ? localStorage.getItem('adp_user_email') || '' : '';
+  useApplicationRealtime({
+    email: userEmail,
+    onStatusUpdate: fetchApplications,
+  });
 
   const handleStartWizard = () => {
     router.push(APPLICANT_ROUTES.applyStart);
