@@ -46,15 +46,15 @@ export const DataTable: React.FC<DataTableProps> = ({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-surface-container border-b border-border-muted text-xs font-bold text-text-muted uppercase tracking-wider select-none">
-              <th className="px-6 py-4">Ref ID</th>
               <th className="px-6 py-4">Applicant Name</th>
+              <th className="px-6 py-4">IC No.</th>
+              <th className="px-6 py-4">Business Name</th>
 
               <th className="px-6 py-4 cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => onSort('submissionDate')}>
                 <div className="flex items-center">
                   Submission Date {renderSortIcon('submissionDate')}
                 </div>
               </th>
-              <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4 cursor-pointer hover:bg-surface-container-high transition-colors" onClick={() => onSort('aiConfidence')}>
                 <div className="flex items-center">
                   AI Confidence {renderSortIcon('aiConfidence')}
@@ -86,20 +86,20 @@ export const DataTable: React.FC<DataTableProps> = ({
                   >
                     {/* First cell with optional red left border if urgent */}
                     <td className={`
-                      px-6 py-4 font-mono font-semibold text-text-main text-xs
+                      px-6 py-4 font-semibold text-text-main
                       ${showUrgentBar ? 'border-l-4 border-error pl-5' : ''}
                     `}>
-                      {app.id}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-text-main">
                       {app.applicantName}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs text-text-muted">
+                      {app.applicantIcNo || '-'}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-text-main">
+                      {app.businessName || '-'}
                     </td>
 
                     <td className="px-6 py-4 text-text-muted">
                       {app.submissionDate}
-                    </td>
-                    <td className="px-6 py-4">
-                      {renderStatusBadge(app.status)}
                     </td>
                     <td className="px-6 py-4">
                       {renderConfidenceScore(app.aiConfidence)}

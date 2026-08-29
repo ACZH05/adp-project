@@ -11,7 +11,8 @@ interface DecisionPanelProps {
   onDecision: (
     newStatus: ApplicationDetail['status'],
     actionName: string,
-    notes: string
+    notes: string,
+    reason?: string
   ) => void;
 }
 
@@ -44,9 +45,9 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
     if (!reason.trim()) return;
 
     if (modalType === 'correction') {
-      onDecision('Flagged', 'Correction Requested', `Reason: ${reason}\n\nNotes: ${notes}`);
+      onDecision('Flagged', 'Correction Requested', notes || 'Correction requested by reviewing officer.', reason);
     } else {
-      onDecision('Rejected', 'Application Rejected', `Reason: ${reason}\n\nNotes: ${notes}`);
+      onDecision('Rejected', 'Application Rejected', notes || 'Application rejected by reviewing officer.', reason);
     }
 
     setModalType(null);
@@ -245,9 +246,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({ application, onDec
           <div className="relative py-1 flex flex-col gap-5">
             {/* Timeline Line */}
             <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-200 pointer-events-none" />
-            {[...application.auditLogs]
-              .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-              .map((log) => (
+            {application.auditLogs.map((log) => (
               <div key={log.id} className="relative pl-6 flex flex-col gap-1 text-xs">
                 {/* Timeline marker */}
                 <div className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full border-2 border-white bg-primary shrink-0 flex items-center justify-center z-10">

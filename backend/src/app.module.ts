@@ -7,6 +7,9 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { DocumentModule } from './document/document.module';
 import { ApplicationModule } from './application/application.module';
 import { NotificationModule } from './notification/notification.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { OfficerModule } from './officer/officer.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -16,11 +19,14 @@ import { NotificationModule } from './notification/notification.module';
         port: Number(process.env.REDIS_PORT ?? 6379),
       },
     }),
+    PrismaModule,
     VerificationModule,
     SupabaseModule,
     DocumentModule,
     ApplicationModule,
     NotificationModule,
+    OfficerModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

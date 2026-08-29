@@ -47,11 +47,11 @@ export const LiveTable: React.FC<LiveTableProps> = ({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-surface-container border-b border-border-muted text-xs font-bold text-text-muted uppercase tracking-wider select-none">
-              <th className="px-6 py-4">Ref ID</th>
               <th className="px-6 py-4">Applicant Name</th>
+              <th className="px-6 py-4">IC No.</th>
+              <th className="px-6 py-4">Business Name</th>
 
               <th className="px-6 py-4">Arrival</th>
-              <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4">AI Match</th>
               <th className="px-6 py-4">Action</th>
             </tr>
@@ -78,20 +78,20 @@ export const LiveTable: React.FC<LiveTableProps> = ({
                     onClick={() => handleRowClick(app.id)}
                   >
                     <td className={`
-                      px-6 py-4 font-mono font-semibold text-text-main text-xs
+                      px-6 py-4 font-semibold text-text-main
                       ${isUrgent ? 'border-l-4 border-error pl-5' : ''}
                     `}>
-                      {app.id}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-text-main">
                       {app.applicantName}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs text-text-muted">
+                      {app.applicantIcNo || '-'}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-text-main">
+                      {app.businessName || '-'}
                     </td>
 
                     <td className="px-6 py-4 text-xs font-semibold text-text-muted">
                       {getSimulatedLiveTime(index)}
-                    </td>
-                    <td className="px-6 py-4">
-                      {renderStatusBadge(app.status)}
                     </td>
                     <td className="px-6 py-4">
                       {renderConfidenceScore(app.aiConfidence)}
