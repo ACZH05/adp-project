@@ -5,9 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/src/shared/components/Card';
 import { Button } from '@/src/shared/components/Button';
 import { TextInput } from '@/src/shared/components/TextInput';
+import { useAuth } from '../context/AuthContext';
+import { authApi } from '../data/authApi';
 
 export const AuthCard: React.FC = () => {
   const router = useRouter();
+  const { login } = useAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -19,7 +22,7 @@ export const AuthCard: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -47,16 +50,23 @@ export const AuthCard: React.FC = () => {
       }
       
       setErrors({});
-      const signUpPayload = {
-        firstName,
-        lastName,
-        phoneNumber,
-        email,
-        password
-      };
-
-      // Logic for auth would go here
-      console.log('Register payload:', signUpPayload);
+      try {
+        const result = await authApi.register({
+          firstName,
+          lastName,
+          phoneNumber,
+          email,
+          password
+        });
+        login(result.access_token, result.user);
+        if (result.user.role === 'admin' || result.user.role === 'officer') {
+          router.push('/officer/queue');
+        } else {
+          router.push('/applicant/dashboard');
+        }
+      } catch (err: any) {
+        setErrors({ email: err.message || 'Registration failed' });
+      }
     } else {
       if (!email.includes('@')) {
         newErrors.email = 'Please enter a valid email address format.';
@@ -65,12 +75,16 @@ export const AuthCard: React.FC = () => {
       }
       setErrors({});
       
-      // Simulating login redirection based on user role/email
-      if (email.toLowerCase().includes('officer')) {
-        router.push('/officer/queue');
-      } else {
-        localStorage.setItem('adp_user_email', email.toLowerCase());
-        router.push('/applicant/dashboard');
+      try {
+        const result = await authApi.login(email, password);
+        login(result.access_token, result.user);
+        if (result.user.role === 'admin' || result.user.role === 'officer') {
+          router.push('/officer/queue');
+        } else {
+          router.push('/applicant/dashboard');
+        }
+      } catch (err: any) {
+        setErrors({ email: err.message || 'Login failed', password: '' });
       }
     }
   };

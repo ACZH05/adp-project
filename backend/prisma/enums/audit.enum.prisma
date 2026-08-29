@@ -1,5 +1,7 @@
 enum AuditAction {
   login
+  register
+  auth_failure
   submit_application
   upload_document
   run_verification

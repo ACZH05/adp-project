@@ -9,6 +9,8 @@ import { ApplicationModule } from './application/application.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OfficerModule } from './officer/officer.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AuthModule } from './auth/auth.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
       },
     }),
     PrismaModule,
+    AuditModule,
+    AuthModule,
     VerificationModule,
     SupabaseModule,
     DocumentModule,
