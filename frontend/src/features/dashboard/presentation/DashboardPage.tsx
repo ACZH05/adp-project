@@ -12,22 +12,43 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const email = localStorage.getItem('adp_user_email') || 'test@example.com';
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
 
-    fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`)
-      .then(res => res.json())
+    fetch(`${apiUrl}/applications?email=${encodeURIComponent(email)}`, {
+      signal: controller.signal,
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setLatestApplication(data[0]); // Newest application
+          const sorted = [...data].sort(
+            (a, b) =>
+              new Date(b.createdAt || b.submissionDate || 0).getTime() -
+              new Date(a.createdAt || a.submissionDate || 0).getTime()
+          );
+          setLatestApplication(sorted[0]);
         }
       })
       .catch(err => {
-        console.error('Failed to load dashboard application:', err);
+        if (err.name !== 'AbortError') {
+          console.error('Failed to load dashboard application:', err);
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   const handleStartWizard = () => {

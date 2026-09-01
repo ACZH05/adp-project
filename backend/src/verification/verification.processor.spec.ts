@@ -62,7 +62,11 @@ describe('VerificationConsumer', () => {
         },
       ]),
     } as unknown as SupabaseService;
-    const consumer = new VerificationConsumer(supabaseService, {} as any);
+    const consumer = new VerificationConsumer(
+      supabaseService,
+      {} as any,
+      {} as any,
+    );
 
     const request = await (
       consumer as unknown as {
@@ -90,7 +94,11 @@ describe('VerificationConsumer', () => {
     const supabaseService = {
       createSignedDocumentUrl: jest.fn().mockResolvedValue([]),
     } as unknown as SupabaseService;
-    const consumer = new VerificationConsumer(supabaseService, {} as any);
+    const consumer = new VerificationConsumer(
+      supabaseService,
+      {} as any,
+      {} as any,
+    );
 
     await expect(
       (
@@ -146,7 +154,11 @@ describe('VerificationConsumer', () => {
     });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const consumer = new VerificationConsumer(supabaseService, {} as any);
+    const consumer = new VerificationConsumer(
+      supabaseService,
+      {} as any,
+      {} as any,
+    );
     const result = await consumer.process({
       name: 'verify-application',
       data: payload,
@@ -194,7 +206,11 @@ describe('VerificationConsumer', () => {
     });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const consumer = new VerificationConsumer(supabaseService, {} as any);
+    const consumer = new VerificationConsumer(
+      supabaseService,
+      {} as any,
+      {} as any,
+    );
 
     await expect(
       consumer.process({ name: 'verify-application', data: payload } as never),
